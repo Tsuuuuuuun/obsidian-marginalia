@@ -1,4 +1,4 @@
-import {App, Notice, PluginSettingTab, Setting} from "obsidian";
+import {App, Notice, normalizePath, PluginSettingTab, Setting} from "obsidian";
 import type MarginaliaPlugin from "./main";
 
 export interface MarginaliaSettings {
@@ -45,9 +45,11 @@ export class MarginaliaSettingTab extends PluginSettingTab {
 					.setIcon('refresh-cw')
 					.setTooltip('Migrate comment data to the selected location')
 					.onClick(async () => {
-						const newBasePath = this.plugin.settings.storageLocation === 'vault'
-							? '.marginalia'
-							: `${this.plugin.manifest.dir ?? ''}/comments`;
+						const newBasePath = normalizePath(
+							this.plugin.settings.storageLocation === 'vault'
+								? '.marginalia'
+								: `${this.plugin.manifest.dir ?? ''}/comments`
+						);
 
 						if (newBasePath === this.plugin.store.currentBasePath) {
 							new Notice('Comment data is already in the selected location.');

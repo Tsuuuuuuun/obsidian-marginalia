@@ -1,22 +1,22 @@
-import type {DataAdapter} from 'obsidian';
+import {normalizePath, type Vault} from 'obsidian';
 import type {PathIndexData} from '../types';
 
 export class PathIndex {
 	private data: PathIndexData;
 	private basePath: string;
-	private adapter: DataAdapter;
+	private vault: Vault;
 
-	constructor(adapter: DataAdapter, basePath: string) {
-		this.adapter = adapter;
+	constructor(vault: Vault, basePath: string) {
+		this.vault = vault;
 		this.basePath = basePath;
 		this.data = {version: 1, mappings: {}};
 	}
 
 	async load(): Promise<void> {
 		const indexPath = this.getIndexPath();
-		if (await this.adapter.exists(indexPath)) {
+		if (await this.vault.adapter.exists(indexPath)) {
 			try {
-				const raw = await this.adapter.read(indexPath);
+				const raw = await this.vault.adapter.read(indexPath);
 				this.data = JSON.parse(raw) as PathIndexData;
 			} catch {
 				this.data = {version: 1, mappings: {}};
@@ -25,7 +25,7 @@ export class PathIndex {
 	}
 
 	async save(): Promise<void> {
-		await this.adapter.write(this.getIndexPath(), JSON.stringify(this.data, null, 2));
+		await this.vault.adapter.write(this.getIndexPath(), JSON.stringify(this.data, null, 2));
 	}
 
 	getCommentFileName(notePath: string): string | undefined {
@@ -43,7 +43,7 @@ export class PathIndex {
 
 	getCommentFilePath(notePath: string): string {
 		const fileName = this.getOrCreateCommentFileName(notePath);
-		return `${this.basePath}/${fileName}`;
+		return normalizePath(`${this.basePath}/${fileName}`);
 	}
 
 	async renamePath(oldPath: string, newPath: string): Promise<void> {
@@ -72,6 +72,6 @@ export class PathIndex {
 	}
 
 	private getIndexPath(): string {
-		return `${this.basePath}/_index.json`;
+		return normalizePath(`${this.basePath}/_index.json`);
 	}
 }

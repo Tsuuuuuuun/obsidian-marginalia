@@ -1,10 +1,10 @@
-import type {DataAdapter} from 'obsidian';
+import {normalizePath, type Vault} from 'obsidian';
 import type {AnchoredComment, CommentData, CommentFile, CommentTarget, NoteComment, ReplyComment, ResolvedAnchor, RootComment} from '../types';
 import {isReplyComment, isAnchoredComment, isNoteComment, isRootComment, getRootResolution} from '../types';
 import {PathIndex} from './PathIndex';
 
 export class CommentStore {
-	private adapter: DataAdapter;
+	private vault: Vault;
 	private basePath: string;
 	pathIndex: PathIndex;
 	private cache: Map<string, CommentFile> = new Map();
@@ -15,10 +15,10 @@ export class CommentStore {
 		return this.basePath;
 	}
 
-	constructor(adapter: DataAdapter, basePath: string) {
-		this.adapter = adapter;
+	constructor(vault: Vault, basePath: string) {
+		this.vault = vault;
 		this.basePath = basePath;
-		this.pathIndex = new PathIndex(adapter, this.basePath);
+		this.pathIndex = new PathIndex(vault, this.basePath);
 	}
 
 	setAnchorResolver(fn: (target: CommentTarget, docText: string, threshold: number) => ResolvedAnchor | null): void {
@@ -26,8 +26,8 @@ export class CommentStore {
 	}
 
 	async initialize(): Promise<void> {
-		if (!(await this.adapter.exists(this.basePath))) {
-			await this.adapter.mkdir(this.basePath);
+		if (!(await this.vault.adapter.exists(this.basePath))) {
+			await this.vault.adapter.mkdir(this.basePath);
 		}
 		await this.pathIndex.load();
 	}
@@ -193,9 +193,9 @@ export class CommentStore {
 		this.cache.delete(notePath);
 
 		if (shouldDelete && fileName) {
-			const filePath = `${this.basePath}/${fileName}`;
-			if (await this.adapter.exists(filePath)) {
-				await this.adapter.remove(filePath);
+			const filePath = normalizePath(`${this.basePath}/${fileName}`);
+			if (await this.vault.adapter.exists(filePath)) {
+				await this.vault.adapter.remove(filePath);
 			}
 		}
 	}
@@ -222,14 +222,14 @@ export class CommentStore {
 		await this.flushAll();
 
 		// Ensure destination directory exists
-		if (!(await this.adapter.exists(newBasePath))) {
-			await this.adapter.mkdir(newBasePath);
+		if (!(await this.vault.adapter.exists(newBasePath))) {
+			await this.vault.adapter.mkdir(newBasePath);
 		}
 
 		// Phase 1: List source files
 		let listed: { files: string[]; folders: string[] };
 		try {
-			listed = await this.adapter.list(this.basePath);
+			listed = await this.vault.adapter.list(this.basePath);
 		} catch {
 			// Source directory doesn't exist or can't be listed
 			this.reinitialize(newBasePath);
@@ -247,15 +247,15 @@ export class CommentStore {
 		const copies: Array<{ src: string; dest: string; content: string }> = [];
 		for (const srcFile of listed.files) {
 			const fileName = srcFile.substring(this.basePath.length + 1);
-			const content = await this.adapter.read(srcFile);
-			const destFile = `${newBasePath}/${fileName}`;
-			await this.adapter.write(destFile, content);
+			const content = await this.vault.adapter.read(srcFile);
+			const destFile = normalizePath(`${newBasePath}/${fileName}`);
+			await this.vault.adapter.write(destFile, content);
 			copies.push({ src: srcFile, dest: destFile, content });
 		}
 
 		// Phase 3: Verify all copies before deleting originals
 		for (const { dest, content } of copies) {
-			const verified = await this.adapter.read(dest);
+			const verified = await this.vault.adapter.read(dest);
 			if (verified !== content) {
 				throw new Error(`Migration verification failed for ${dest}`);
 			}
@@ -263,12 +263,12 @@ export class CommentStore {
 
 		// Phase 4: Delete originals (all copies verified)
 		for (const { src } of copies) {
-			await this.adapter.remove(src);
+			await this.vault.adapter.remove(src);
 		}
 
 		// Phase 5: Try to remove the now-empty source directory
 		try {
-			await this.adapter.rmdir(this.basePath, false);
+			await this.vault.adapter.rmdir(this.basePath, false);
 		} catch {
 			// Directory might not be empty or removable — ignore
 		}
@@ -282,7 +282,7 @@ export class CommentStore {
 
 	private reinitialize(newBasePath: string): void {
 		this.basePath = newBasePath;
-		this.pathIndex = new PathIndex(this.adapter, this.basePath);
+		this.pathIndex = new PathIndex(this.vault, this.basePath);
 		this.cache.clear();
 	}
 
@@ -293,11 +293,11 @@ export class CommentStore {
 		const fileName = this.pathIndex.getCommentFileName(notePath);
 		if (!fileName) return null;
 
-		const filePath = `${this.basePath}/${fileName}`;
-		if (!(await this.adapter.exists(filePath))) return null;
+		const filePath = normalizePath(`${this.basePath}/${fileName}`);
+		if (!(await this.vault.adapter.exists(filePath))) return null;
 
 		try {
-			const raw = await this.adapter.read(filePath);
+			const raw = await this.vault.adapter.read(filePath);
 			const file = JSON.parse(raw) as CommentFile;
 			this.cache.set(notePath, file);
 			return file;
@@ -340,8 +340,8 @@ export class CommentStore {
 		const fileName = this.pathIndex.getCommentFileName(notePath);
 		if (!fileName) return;
 
-		const filePath = `${this.basePath}/${fileName}`;
-		await this.adapter.write(filePath, JSON.stringify(file, null, 2));
+		const filePath = normalizePath(`${this.basePath}/${fileName}`);
+		await this.vault.adapter.write(filePath, JSON.stringify(file, null, 2));
 	}
 }
 

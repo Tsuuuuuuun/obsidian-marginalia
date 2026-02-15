@@ -18,13 +18,6 @@ export function getThreads(comments: CommentData[]): CommentThread[] {
 		}
 	}
 
-	// Warn about orphaned replies (parent not found)
-	for (const [parentId] of replyMap) {
-		if (!roots.some(r => r.id === parentId)) {
-			console.warn(`[marginalia] Reply references non-existent parent: ${parentId}`);
-		}
-	}
-
 	const threads: CommentThread[] = [];
 	for (const root of roots) {
 		const replies = replyMap.get(root.id) ?? [];
