@@ -6,5 +6,5 @@
 	"description": "Add non-destructive margin comments and annotations to your notes. Anchor comments to specific text without modifying the original file — stored as external sidecar JSON.",
 	"author": "",
 	"authorUrl": "",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }
