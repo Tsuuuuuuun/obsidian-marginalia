@@ -88,6 +88,13 @@
 	color: var(--text-muted);
 }
 
+.side-comment-popover-reply-count {
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+	margin-top: 4px;
+	font-style: italic;
+}
+
 /* Panel */
 .side-comment-panel {
 	padding: 8px;
@@ -203,6 +210,7 @@
 .side-comment-action-btn {
 	background: none;
 	border: none;
+	box-shadow: none;
 	cursor: pointer;
 	padding: 2px;
 	color: var(--text-muted);
@@ -212,6 +220,7 @@
 .side-comment-action-btn:hover {
 	color: var(--text-normal);
 	background: var(--background-modifier-hover);
+	box-shadow: none;
 }
 
 /* Modal */
@@ -248,4 +257,34 @@
 	font-size: var(--font-smallest);
 	color: var(--text-muted);
 	margin-top: 8px;
+}
+
+/* Threads */
+.side-comment-thread {
+	margin-bottom: 8px;
+}
+
+.side-comment-replies {
+	margin-left: 16px;
+	padding-left: 12px;
+	border-left: 2px solid var(--background-modifier-border);
+}
+
+.side-comment-reply {
+	padding: 6px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	margin-top: 6px;
+}
+
+.side-comment-reply-count-badge {
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+	margin-left: 2px;
+}
+
+.side-comment-orphaned .side-comment-replies {
+	opacity: 0.7;
+	border-left-color: var(--text-error);
 }
