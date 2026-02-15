@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "marginalia",
+	"name": "Marginalia",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"description": "Add non-destructive margin comments and annotations to your notes. Anchor comments to specific text without modifying the original file — stored as external sidecar JSON.",
+	"author": "",
+	"authorUrl": "",
+	"isDesktopOnly": true
 }

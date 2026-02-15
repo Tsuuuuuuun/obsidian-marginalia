@@ -1,8 +1,424 @@
-/*
+/* Marginalia Plugin Styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* Comment icon positioned just left of the line text via absolute positioning.
+   .cm-line has position: relative, so this anchors to the line start. */
+.marginalia-gutter-icon {
+	position: absolute;
+	left: -22px;
+	top: 0;
+	height: calc(var(--line-height-normal, 1.5) * 1em);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 100ms ease;
+	user-select: none;
+}
 
-If your plugin does not need CSS, delete this file.
+/* Badge showing comment count */
+.marginalia-badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	min-width: 14px;
+	height: 14px;
+	line-height: 14px;
+	font-size: 10px;
+	text-align: center;
+	border-radius: 7px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	pointer-events: none;
+}
 
-*/
+.marginalia-gutter-icon svg {
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+}
+
+.marginalia-gutter-icon:hover {
+	opacity: 1;
+}
+
+/* Popover */
+.marginalia-popover {
+	position: fixed;
+	z-index: var(--layer-popover);
+	top: var(--popover-top, 0);
+	left: var(--popover-left, 0);
+	max-width: 300px;
+	padding: 8px 12px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	box-shadow: var(--shadow-s);
+	font-size: var(--font-small);
+	cursor: pointer;
+}
+
+.marginalia-popover-hidden {
+	display: none;
+}
+
+.marginalia-popover-item {
+	cursor: pointer;
+	padding: 2px 0;
+	border-radius: var(--radius-s);
+}
+
+.marginalia-popover-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.marginalia-popover-divider {
+	margin: 4px 0;
+	border: none;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.marginalia-popover-body {
+	color: var(--text-normal);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.marginalia-popover-hint {
+	margin-top: 4px;
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+}
+
+.marginalia-popover-reply-count {
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+	margin-top: 4px;
+	font-style: italic;
+}
+
+/* Panel */
+.marginalia-panel {
+	padding: 8px;
+}
+
+.marginalia-empty {
+	padding: 16px;
+	text-align: center;
+	color: var(--text-muted);
+}
+
+.marginalia-toolbar {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.marginalia-filter-group {
+	display: flex;
+	gap: 4px;
+}
+
+.marginalia-filter-btn {
+	font-size: var(--font-smallest);
+	padding: 2px 8px;
+	border-radius: var(--radius-s);
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.marginalia-filter-btn.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+/* Comment list */
+.marginalia-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.marginalia-item {
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+.marginalia-item-highlight {
+	animation: marginalia-highlight 2s ease;
+}
+
+@keyframes marginalia-highlight {
+	0% { background: var(--text-highlight-bg); }
+	100% { background: var(--background-secondary); }
+}
+
+.marginalia-orphaned {
+	border-left: 3px solid var(--text-error);
+	opacity: 0.7;
+}
+
+.marginalia-quote {
+	margin: 0 0 6px 0;
+	padding: 4px 8px;
+	border-left: 3px solid var(--text-accent);
+	font-size: var(--font-small);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.marginalia-quote:hover {
+	color: var(--text-normal);
+}
+
+.marginalia-orphaned-badge {
+	font-size: var(--font-smallest);
+	color: var(--text-error);
+	margin-left: 4px;
+}
+
+.marginalia-body {
+	font-size: var(--font-small);
+	margin-bottom: 6px;
+}
+
+.marginalia-body p {
+	margin: 0 0 4px 0;
+}
+
+.marginalia-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.marginalia-timestamp {
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+}
+
+.marginalia-actions {
+	display: flex;
+	gap: 4px;
+}
+
+.marginalia-more-btn {
+	background: none;
+	border: none;
+	box-shadow: none;
+	cursor: pointer;
+	padding: 2px;
+	color: var(--text-muted);
+	border-radius: var(--radius-s);
+}
+
+.marginalia-more-btn:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+	box-shadow: none;
+}
+
+.marginalia-more-btn.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.marginalia-add-btn {
+	background: none;
+	border: none;
+	box-shadow: none;
+	cursor: pointer;
+	padding: 2px;
+	color: var(--text-muted);
+	border-radius: var(--radius-s);
+}
+
+.marginalia-add-btn:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+	box-shadow: none;
+}
+
+.marginalia-action-btn {
+	background: none;
+	border: none;
+	box-shadow: none;
+	cursor: pointer;
+	padding: 2px;
+	color: var(--text-muted);
+	border-radius: var(--radius-s);
+}
+
+.marginalia-action-btn:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+	box-shadow: none;
+}
+
+/* Modal */
+.marginalia-modal {
+	max-width: 500px;
+}
+
+.marginalia-modal-textarea {
+	width: 100%;
+	min-height: 120px;
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-family: var(--font-text);
+	font-size: var(--font-ui-small);
+	resize: vertical;
+}
+
+.marginalia-modal-textarea:focus {
+	border-color: var(--interactive-accent);
+	outline: none;
+}
+
+.marginalia-modal-buttons {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.marginalia-modal-hint {
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+	margin-top: 8px;
+}
+
+/* Note comments section */
+.marginalia-section-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--font-small);
+	font-weight: var(--font-semibold);
+	color: var(--text-muted);
+	margin-bottom: 6px;
+	padding: 4px 0;
+}
+
+.marginalia-section-header svg {
+	width: 14px;
+	height: 14px;
+}
+
+.marginalia-note-section {
+	margin-bottom: 12px;
+}
+
+.marginalia-note-item {
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-left: 3px solid var(--text-warning);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+	margin-bottom: 6px;
+}
+
+.marginalia-note-label {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: var(--font-smallest);
+	color: var(--text-warning);
+	margin-bottom: 6px;
+}
+
+.marginalia-note-label svg {
+	width: 12px;
+	height: 12px;
+}
+
+/* Threads */
+.marginalia-thread {
+	margin-bottom: 8px;
+}
+
+.marginalia-replies {
+	margin-left: 16px;
+	padding-left: 12px;
+	border-left: 2px solid var(--background-modifier-border);
+}
+
+.marginalia-reply {
+	padding: 6px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	margin-top: 6px;
+}
+
+.marginalia-reply-count-badge {
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+	margin-left: 2px;
+}
+
+.marginalia-orphaned .marginalia-replies {
+	opacity: 0.7;
+	border-left-color: var(--text-error);
+}
+
+/* Resolved: panel thread/note items */
+.marginalia-resolved {
+	opacity: 0.6;
+}
+
+.marginalia-resolved-badge {
+	font-size: var(--font-smallest);
+	color: var(--text-success);
+	margin-left: 4px;
+}
+
+/* Resolved: gutter icon */
+.marginalia-gutter-resolved {
+	opacity: 0.4;
+}
+
+.marginalia-gutter-resolved svg {
+	color: var(--text-success);
+}
+
+/* Resolved: popover */
+.marginalia-popover-resolved {
+	opacity: 0.7;
+}
+
+/* Resolved + Orphaned combination */
+.marginalia-resolved.marginalia-orphaned {
+	opacity: 0.5;
+}
+
+/* Reading View gutter icon positioning */
+.marginalia-has-comment {
+	position: relative;
+}
+
+.markdown-preview-view .marginalia-rv-icon {
+	position: absolute;
+	left: -28px;
+	top: 4px;
+}
+
+/* Settings: migrate button spin animation */
+.marginalia-spin .clickable-icon {
+	animation: marginalia-spin 1s linear infinite;
+}
+
+@keyframes marginalia-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
