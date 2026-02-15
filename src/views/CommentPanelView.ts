@@ -37,6 +37,24 @@ export class CommentPanelView extends ItemView {
 				void this.updateForActiveFile();
 			})
 		);
+
+		// Handle internal wiki-link clicks in rendered Markdown
+		this.registerDomEvent(this.contentEl, 'click', (evt: MouseEvent) => {
+			const target = evt.target as HTMLElement;
+			const link = target.closest('a.internal-link');
+			if (link instanceof HTMLAnchorElement) {
+				evt.preventDefault();
+				const href = link.dataset.href;
+				if (href) {
+					void this.plugin.app.workspace.openLinkText(
+						href,
+						this.currentFile?.path ?? '',
+						evt.ctrlKey || evt.metaKey,
+					);
+				}
+			}
+		});
+
 		await this.updateForActiveFile();
 	}
 
