@@ -1,90 +1,115 @@
-# Obsidian Sample Plugin
+# Marginalia
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Non-destructive margin comments and annotations for [Obsidian](https://obsidian.md).
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+![Obsidian minimum version](https://img.shields.io/badge/Obsidian-≥0.15.0-blueviolet)
+![License](https://img.shields.io/badge/License-0--BSD-green)
+<!-- ![Downloads](https://img.shields.io/github/downloads/YOUR_GITHUB_USER/obsidian-marginalia/total) -->
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+![Screenshot](assets/screenshot-overview.png)
 
-## First time developing plugins?
+## Features
 
-Quick starting guide for new plugin devs:
+- **Non-destructive annotations** — Comments are stored as external sidecar JSON files. Your original `.md` files are never modified.
+- **Anchored comments** — Select any text and attach a comment to it. The anchor survives edits thanks to smart text matching.
+- **Note-level comments** — Add general comments to an entire note without selecting specific text.
+- **Threaded replies** — Reply to any comment to create a conversation thread.
+- **Resolve / unresolve** — Mark comments as resolved and bring them back when needed.
+- **Gutter icons** — Commented lines are marked with icons in the editor gutter. Hover to preview.
+- **Comment panel** — A dedicated sidebar panel lists all comments for the current note with filters: All / Open / Resolved / Active / Orphaned.
+- **Smart text anchoring** — Uses a 3-stage matching strategy (line hint → context-scored search → fuzzy match) so anchors stay attached even after surrounding text is edited.
+- **Markdown in comments** — Comment bodies support Markdown formatting, including `[[wikilinks]]`.
+- **Desktop and mobile** — Works on all platforms Obsidian supports.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+## Demo
 
-## Releasing new releases
+![Adding a comment](assets/demo.gif)
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+## Installation
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+### Community plugins (recommended)
 
-## Adding your plugin to the community plugin list
+1. Open **Settings → Community plugins → Browse**.
+2. Search for **Marginalia**.
+3. Click **Install**, then **Enable**.
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+<!-- Community plugin listing is pending. Use manual installation for now. -->
 
-## How to use
+### Manual installation
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+1. Download `main.js`, `styles.css`, and `manifest.json` from the latest release.
+2. Create a folder `VaultFolder/.obsidian/plugins/marginalia/`.
+3. Copy the three files into that folder.
+4. Reload Obsidian and enable **Marginalia** in **Settings → Community plugins**.
 
-## Manually installing the plugin
+## Usage
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+### Adding an anchored comment
 
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+1. Select text in the editor.
+2. Right-click and choose **Add comment to selection**, or run the command from the Command Palette.
+3. Type your comment and submit.
 
-## Funding URL
+The selected text becomes the anchor — a gutter icon appears on that line.
 
-You can include funding URLs where people who use your plugin can financially support it.
+### Adding a note comment
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+Run the **Add note comment** command from the Command Palette, or click the "+" button in the comment panel. Note comments are attached to the file, not to specific text.
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+### Viewing comments
 
-If you have multiple URLs, you can also do:
+Open the comment panel with the **Open comment panel** command, or click the Marginalia icon in the left ribbon. The panel shows all comments for the active note.
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+Use the filter menu to switch between views:
 
-## API Documentation
+| Filter | Shows |
+| -------- | ------- |
+| All | Every comment |
+| Open | Unresolved comments |
+| Resolved | Resolved comments |
+| Active | Comments anchored to text (not orphaned) |
+| Orphaned | Comments whose anchor text can no longer be found |
 
-See https://docs.obsidian.md
+### Resolving and replying
+
+- Click the checkmark on a comment to resolve it. Click again to unresolve.
+- Click the reply button to add a threaded reply.
+
+### Navigating between comments
+
+Use **Go to next comment** / **Go to previous comment** to jump between commented positions in the editor.
+
+## Commands
+
+| Command | Description |
+| --------- | ------------- |
+| Add comment to selection | Attach a comment to the currently selected text |
+| Add note comment | Add a comment to the current note (not anchored to text) |
+| Open comment panel | Open the comment sidebar panel |
+| Go to next comment | Move the cursor to the next comment position |
+| Go to previous comment | Move the cursor to the previous comment position |
+
+## Settings
+
+| Setting | Options | Default | Description |
+| --------- | --------- | --------- | ------------- |
+| Storage location | Plugin folder (`comments/`) / Vault root (`.marginalia/`) | Plugin folder | Where comment data is stored. A migrate button moves existing data when changed. |
+| Comment sort order | Position in file / Creation date | Position in file | How comments are ordered in the sidebar panel. |
+| Show gutter icons | On / Off | On | Display comment indicators in the editor gutter. |
+| Fuzzy match threshold | 0.1 – 0.5 (slider) | 0.3 | Maximum edit distance ratio for fuzzy anchor matching. Lower = stricter. |
+| Orphaned comment handling | Keep and notify / Delete automatically | Keep and notify | What happens when a comment's target text can no longer be found. |
+
+## How Comments Are Stored
+
+Marginalia never touches your `.md` files. All comment data is stored as JSON in a separate location:
+
+- **Plugin folder** (default): `VaultFolder/.obsidian/plugins/marginalia/comments/`
+- **Vault root**: `VaultFolder/.marginalia/`
+
+Each note with comments gets its own JSON file. An `_index.json` file maps vault file paths to comment files. Vault rename and delete events are tracked automatically to keep everything in sync.
+
+You can switch between storage locations in Settings — use the migrate button to move existing data.
+
+## License
+
+[0-BSD](LICENSE)
