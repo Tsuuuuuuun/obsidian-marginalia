@@ -1,4 +1,4 @@
-import {ItemView, MarkdownRenderer, MarkdownView, WorkspaceLeaf, TFile, setIcon} from 'obsidian';
+import {ItemView, MarkdownRenderer, MarkdownView, Menu, WorkspaceLeaf, TFile, setIcon} from 'obsidian';
 import type SideCommentPlugin from '../main';
 import type {AnchoredComment, CommentData, CommentThread, NoteComment, PanelData, ReplyComment, RootComment, ResolvedAnchor} from '../types';
 import {isReplyComment, isNoteComment, getRootResolution} from '../types';
@@ -135,15 +135,19 @@ export class CommentPanelView extends ItemView {
 
 		const filterGroup = toolbar.createDiv({cls: 'side-comment-filter-group'});
 
-		const filters: Array<{label: string; value: 'all' | 'open' | 'resolved' | 'active' | 'orphaned'}> = [
+		type FilterValue = typeof this.filter;
+		const primaryFilters: Array<{label: string; value: FilterValue}> = [
 			{label: 'All', value: 'all'},
 			{label: 'Open', value: 'open'},
 			{label: 'Resolved', value: 'resolved'},
+		];
+
+		const overflowFilters: Array<{label: string; value: FilterValue}> = [
 			{label: 'Active', value: 'active'},
 			{label: 'Orphaned', value: 'orphaned'},
 		];
 
-		for (const f of filters) {
+		for (const f of primaryFilters) {
 			const btn = filterGroup.createEl('button', {
 				text: f.label,
 				cls: `side-comment-filter-btn${this.filter === f.value ? ' is-active' : ''}`,
@@ -153,6 +157,31 @@ export class CommentPanelView extends ItemView {
 				this.renderPanel();
 			});
 		}
+
+		// Overflow menu button for Active / Orphaned filters
+		const isOverflowActive = overflowFilters.some(f => f.value === this.filter);
+		const moreBtn = filterGroup.createEl('button', {
+			cls: `side-comment-more-btn clickable-icon${isOverflowActive ? ' is-active' : ''}`,
+			attr: {'aria-label': 'More filters'},
+		});
+		setIcon(moreBtn, 'more-horizontal');
+		moreBtn.addEventListener('click', () => {
+			const menu = new Menu();
+			for (const f of overflowFilters) {
+				menu.addItem(item => {
+					item.setTitle(f.label)
+						.setChecked(this.filter === f.value)
+						.onClick(() => {
+							this.filter = f.value;
+							this.renderPanel();
+						});
+				});
+			}
+			menu.showAtMouseEvent(new MouseEvent('click', {
+				clientX: moreBtn.getBoundingClientRect().left,
+				clientY: moreBtn.getBoundingClientRect().bottom,
+			}));
+		});
 
 		// Add note comment button
 		const addBtn = toolbar.createEl('button', {

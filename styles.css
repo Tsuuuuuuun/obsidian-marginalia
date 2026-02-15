@@ -209,6 +209,27 @@
 	gap: 4px;
 }
 
+.side-comment-more-btn {
+	background: none;
+	border: none;
+	box-shadow: none;
+	cursor: pointer;
+	padding: 2px;
+	color: var(--text-muted);
+	border-radius: var(--radius-s);
+}
+
+.side-comment-more-btn:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+	box-shadow: none;
+}
+
+.side-comment-more-btn.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
 .side-comment-add-btn {
 	background: none;
 	border: none;
