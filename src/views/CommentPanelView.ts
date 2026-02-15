@@ -151,6 +151,32 @@ export class CommentPanelView extends ItemView {
 				this.renderPanel();
 			});
 		}
+
+		// Add note comment button
+		const addBtn = toolbar.createEl('button', {
+			cls: 'side-comment-add-btn clickable-icon',
+			attr: {'aria-label': 'Add note comment'},
+		});
+		setIcon(addBtn, 'plus');
+		addBtn.addEventListener('click', () => {
+			this.addNoteComment();
+		});
+	}
+
+	private addNoteComment(): void {
+		if (!this.currentFile) return;
+		const filePath = this.currentFile.path;
+
+		new CommentModal(
+			this.plugin.app,
+			(body) => {
+				void this.plugin.store.addNoteComment(filePath, body).then(() => {
+					void this.refresh();
+				});
+			},
+			undefined,
+			'Add note comment'
+		).open();
 	}
 
 	private getFilteredPanelData(): PanelData {

@@ -110,7 +110,7 @@
 
 .side-comment-toolbar {
 	display: flex;
-	justify-content: flex-start;
+	justify-content: space-between;
 	margin-bottom: 8px;
 	padding-bottom: 8px;
 	border-bottom: 1px solid var(--background-modifier-border);
@@ -207,6 +207,22 @@
 .side-comment-actions {
 	display: flex;
 	gap: 4px;
+}
+
+.side-comment-add-btn {
+	background: none;
+	border: none;
+	box-shadow: none;
+	cursor: pointer;
+	padding: 2px;
+	color: var(--text-muted);
+	border-radius: var(--radius-s);
+}
+
+.side-comment-add-btn:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+	box-shadow: none;
 }
 
 .side-comment-action-btn {
