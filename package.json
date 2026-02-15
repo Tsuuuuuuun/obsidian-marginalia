@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-side-comment",
+	"name": "obsidian-marginalia",
 	"version": "1.0.0",
 	"description": "Non-destructive annotation plugin for Obsidian",
 	"main": "main.js",

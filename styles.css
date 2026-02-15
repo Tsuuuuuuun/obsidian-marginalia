@@ -1,8 +1,8 @@
-/* Side Comment Plugin Styles */
+/* Marginalia Plugin Styles */
 
 /* Comment icon positioned just left of the line text via absolute positioning.
    .cm-line has position: relative, so this anchors to the line start. */
-.side-comment-gutter-icon {
+.marginalia-gutter-icon {
 	position: absolute;
 	left: -22px;
 	top: 0;
@@ -17,7 +17,7 @@
 }
 
 /* Badge showing comment count */
-.side-comment-badge {
+.marginalia-badge {
 	position: absolute;
 	top: -4px;
 	right: -4px;
@@ -32,18 +32,18 @@
 	pointer-events: none;
 }
 
-.side-comment-gutter-icon svg {
+.marginalia-gutter-icon svg {
 	width: 16px;
 	height: 16px;
 	vertical-align: middle;
 }
 
-.side-comment-gutter-icon:hover {
+.marginalia-gutter-icon:hover {
 	opacity: 1;
 }
 
 /* Popover */
-.side-comment-popover {
+.marginalia-popover {
 	position: fixed;
 	z-index: var(--layer-popover);
 	top: var(--popover-top, 0);
@@ -58,39 +58,39 @@
 	cursor: pointer;
 }
 
-.side-comment-popover-hidden {
+.marginalia-popover-hidden {
 	display: none;
 }
 
-.side-comment-popover-item {
+.marginalia-popover-item {
 	cursor: pointer;
 	padding: 2px 0;
 	border-radius: var(--radius-s);
 }
 
-.side-comment-popover-item:hover {
+.marginalia-popover-item:hover {
 	background: var(--background-modifier-hover);
 }
 
-.side-comment-popover-divider {
+.marginalia-popover-divider {
 	margin: 4px 0;
 	border: none;
 	border-top: 1px solid var(--background-modifier-border);
 }
 
-.side-comment-popover-body {
+.marginalia-popover-body {
 	color: var(--text-normal);
 	white-space: pre-wrap;
 	word-break: break-word;
 }
 
-.side-comment-popover-hint {
+.marginalia-popover-hint {
 	margin-top: 4px;
 	font-size: var(--font-smallest);
 	color: var(--text-muted);
 }
 
-.side-comment-popover-reply-count {
+.marginalia-popover-reply-count {
 	font-size: var(--font-smallest);
 	color: var(--text-muted);
 	margin-top: 4px;
@@ -98,17 +98,17 @@
 }
 
 /* Panel */
-.side-comment-panel {
+.marginalia-panel {
 	padding: 8px;
 }
 
-.side-comment-empty {
+.marginalia-empty {
 	padding: 16px;
 	text-align: center;
 	color: var(--text-muted);
 }
 
-.side-comment-toolbar {
+.marginalia-toolbar {
 	display: flex;
 	justify-content: space-between;
 	margin-bottom: 8px;
@@ -116,12 +116,12 @@
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.side-comment-filter-group {
+.marginalia-filter-group {
 	display: flex;
 	gap: 4px;
 }
 
-.side-comment-filter-btn {
+.marginalia-filter-btn {
 	font-size: var(--font-smallest);
 	padding: 2px 8px;
 	border-radius: var(--radius-s);
@@ -131,41 +131,41 @@
 	cursor: pointer;
 }
 
-.side-comment-filter-btn.is-active {
+.marginalia-filter-btn.is-active {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	border-color: var(--interactive-accent);
 }
 
 /* Comment list */
-.side-comment-list {
+.marginalia-list {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 }
 
-.side-comment-item {
+.marginalia-item {
 	padding: 8px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m);
 	background: var(--background-secondary);
 }
 
-.side-comment-item-highlight {
-	animation: side-comment-highlight 2s ease;
+.marginalia-item-highlight {
+	animation: marginalia-highlight 2s ease;
 }
 
-@keyframes side-comment-highlight {
+@keyframes marginalia-highlight {
 	0% { background: var(--text-highlight-bg); }
 	100% { background: var(--background-secondary); }
 }
 
-.side-comment-orphaned {
+.marginalia-orphaned {
 	border-left: 3px solid var(--text-error);
 	opacity: 0.7;
 }
 
-.side-comment-quote {
+.marginalia-quote {
 	margin: 0 0 6px 0;
 	padding: 4px 8px;
 	border-left: 3px solid var(--text-accent);
@@ -174,42 +174,42 @@
 	cursor: pointer;
 }
 
-.side-comment-quote:hover {
+.marginalia-quote:hover {
 	color: var(--text-normal);
 }
 
-.side-comment-orphaned-badge {
+.marginalia-orphaned-badge {
 	font-size: var(--font-smallest);
 	color: var(--text-error);
 	margin-left: 4px;
 }
 
-.side-comment-body {
+.marginalia-body {
 	font-size: var(--font-small);
 	margin-bottom: 6px;
 }
 
-.side-comment-body p {
+.marginalia-body p {
 	margin: 0 0 4px 0;
 }
 
-.side-comment-footer {
+.marginalia-footer {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 }
 
-.side-comment-timestamp {
+.marginalia-timestamp {
 	font-size: var(--font-smallest);
 	color: var(--text-muted);
 }
 
-.side-comment-actions {
+.marginalia-actions {
 	display: flex;
 	gap: 4px;
 }
 
-.side-comment-more-btn {
+.marginalia-more-btn {
 	background: none;
 	border: none;
 	box-shadow: none;
@@ -219,18 +219,18 @@
 	border-radius: var(--radius-s);
 }
 
-.side-comment-more-btn:hover {
+.marginalia-more-btn:hover {
 	color: var(--text-normal);
 	background: var(--background-modifier-hover);
 	box-shadow: none;
 }
 
-.side-comment-more-btn.is-active {
+.marginalia-more-btn.is-active {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 }
 
-.side-comment-add-btn {
+.marginalia-add-btn {
 	background: none;
 	border: none;
 	box-shadow: none;
@@ -240,13 +240,13 @@
 	border-radius: var(--radius-s);
 }
 
-.side-comment-add-btn:hover {
+.marginalia-add-btn:hover {
 	color: var(--text-normal);
 	background: var(--background-modifier-hover);
 	box-shadow: none;
 }
 
-.side-comment-action-btn {
+.marginalia-action-btn {
 	background: none;
 	border: none;
 	box-shadow: none;
@@ -256,18 +256,18 @@
 	border-radius: var(--radius-s);
 }
 
-.side-comment-action-btn:hover {
+.marginalia-action-btn:hover {
 	color: var(--text-normal);
 	background: var(--background-modifier-hover);
 	box-shadow: none;
 }
 
 /* Modal */
-.side-comment-modal {
+.marginalia-modal {
 	max-width: 500px;
 }
 
-.side-comment-modal-textarea {
+.marginalia-modal-textarea {
 	width: 100%;
 	min-height: 120px;
 	padding: 8px;
@@ -280,26 +280,26 @@
 	resize: vertical;
 }
 
-.side-comment-modal-textarea:focus {
+.marginalia-modal-textarea:focus {
 	border-color: var(--interactive-accent);
 	outline: none;
 }
 
-.side-comment-modal-buttons {
+.marginalia-modal-buttons {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 	margin-top: 12px;
 }
 
-.side-comment-modal-hint {
+.marginalia-modal-hint {
 	font-size: var(--font-smallest);
 	color: var(--text-muted);
 	margin-top: 8px;
 }
 
 /* Note comments section */
-.side-comment-section-header {
+.marginalia-section-header {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -310,16 +310,16 @@
 	padding: 4px 0;
 }
 
-.side-comment-section-header svg {
+.marginalia-section-header svg {
 	width: 14px;
 	height: 14px;
 }
 
-.side-comment-note-section {
+.marginalia-note-section {
 	margin-bottom: 12px;
 }
 
-.side-comment-note-item {
+.marginalia-note-item {
 	padding: 8px;
 	border: 1px solid var(--background-modifier-border);
 	border-left: 3px solid var(--text-warning);
@@ -328,7 +328,7 @@
 	margin-bottom: 6px;
 }
 
-.side-comment-note-label {
+.marginalia-note-label {
 	display: flex;
 	align-items: center;
 	gap: 4px;
@@ -337,23 +337,23 @@
 	margin-bottom: 6px;
 }
 
-.side-comment-note-label svg {
+.marginalia-note-label svg {
 	width: 12px;
 	height: 12px;
 }
 
 /* Threads */
-.side-comment-thread {
+.marginalia-thread {
 	margin-bottom: 8px;
 }
 
-.side-comment-replies {
+.marginalia-replies {
 	margin-left: 16px;
 	padding-left: 12px;
 	border-left: 2px solid var(--background-modifier-border);
 }
 
-.side-comment-reply {
+.marginalia-reply {
 	padding: 6px 8px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
@@ -361,43 +361,43 @@
 	margin-top: 6px;
 }
 
-.side-comment-reply-count-badge {
+.marginalia-reply-count-badge {
 	font-size: var(--font-smallest);
 	color: var(--text-muted);
 	margin-left: 2px;
 }
 
-.side-comment-orphaned .side-comment-replies {
+.marginalia-orphaned .marginalia-replies {
 	opacity: 0.7;
 	border-left-color: var(--text-error);
 }
 
 /* Resolved: panel thread/note items */
-.side-comment-resolved {
+.marginalia-resolved {
 	opacity: 0.6;
 }
 
-.side-comment-resolved-badge {
+.marginalia-resolved-badge {
 	font-size: var(--font-smallest);
 	color: var(--text-success);
 	margin-left: 4px;
 }
 
 /* Resolved: gutter icon */
-.side-comment-gutter-resolved {
+.marginalia-gutter-resolved {
 	opacity: 0.4;
 }
 
-.side-comment-gutter-resolved svg {
+.marginalia-gutter-resolved svg {
 	color: var(--text-success);
 }
 
 /* Resolved: popover */
-.side-comment-popover-resolved {
+.marginalia-popover-resolved {
 	opacity: 0.7;
 }
 
 /* Resolved + Orphaned combination */
-.side-comment-resolved.side-comment-orphaned {
+.marginalia-resolved.marginalia-orphaned {
 	opacity: 0.5;
 }

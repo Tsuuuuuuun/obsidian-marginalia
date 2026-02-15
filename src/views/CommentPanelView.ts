@@ -1,19 +1,19 @@
 import {ItemView, MarkdownRenderer, MarkdownView, Menu, WorkspaceLeaf, TFile, setIcon} from 'obsidian';
-import type SideCommentPlugin from '../main';
+import type MarginaliaPlugin from '../main';
 import type {AnchoredComment, CommentData, CommentThread, NoteComment, PanelData, ReplyComment, RootComment, ResolvedAnchor} from '../types';
 import {isReplyComment, isNoteComment, getRootResolution} from '../types';
 import {CommentModal} from './CommentModal';
 
-export const VIEW_TYPE_COMMENT_PANEL = 'side-comment-panel';
+export const VIEW_TYPE_COMMENT_PANEL = 'marginalia-panel';
 
 export class CommentPanelView extends ItemView {
-	private plugin: SideCommentPlugin;
+	private plugin: MarginaliaPlugin;
 	private currentFile: TFile | null = null;
 	private comments: CommentData[] = [];
 	private anchors: Map<string, ResolvedAnchor> = new Map();
 	private filter: 'all' | 'open' | 'resolved' | 'active' | 'orphaned' = 'all';
 
-	constructor(leaf: WorkspaceLeaf, plugin: SideCommentPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: MarginaliaPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 	}
@@ -76,20 +76,20 @@ export class CommentPanelView extends ItemView {
 		const el = this.contentEl.querySelector(`[data-comment-id="${targetId}"]`);
 		if (el) {
 			el.scrollIntoView({behavior: 'smooth', block: 'center'});
-			el.addClass('side-comment-item-highlight');
-			setTimeout(() => el.removeClass('side-comment-item-highlight'), 2000);
+			el.addClass('marginalia-item-highlight');
+			setTimeout(() => el.removeClass('marginalia-item-highlight'), 2000);
 		}
 	}
 
 	private renderPanel(): void {
 		const {contentEl} = this;
 		contentEl.empty();
-		contentEl.addClass('side-comment-panel');
+		contentEl.addClass('marginalia-panel');
 
 		if (!this.currentFile) {
 			contentEl.createEl('div', {
 				text: 'Open a Markdown file to see comments.',
-				cls: 'side-comment-empty',
+				cls: 'marginalia-empty',
 			});
 			return;
 		}
@@ -101,16 +101,16 @@ export class CommentPanelView extends ItemView {
 		if (noteComments.length === 0 && threads.length === 0) {
 			contentEl.createEl('div', {
 				text: 'No comments yet.',
-				cls: 'side-comment-empty',
+				cls: 'marginalia-empty',
 			});
 			return;
 		}
 
-		const listEl = contentEl.createDiv({cls: 'side-comment-list'});
+		const listEl = contentEl.createDiv({cls: 'marginalia-list'});
 
 		if (noteComments.length > 0) {
-			const noteSection = listEl.createDiv({cls: 'side-comment-note-section'});
-			const header = noteSection.createDiv({cls: 'side-comment-section-header'});
+			const noteSection = listEl.createDiv({cls: 'marginalia-note-section'});
+			const header = noteSection.createDiv({cls: 'marginalia-section-header'});
 			setIcon(header.createSpan(), 'sticky-note');
 			header.createSpan({text: 'Note comments'});
 			for (const nc of noteComments) {
@@ -120,7 +120,7 @@ export class CommentPanelView extends ItemView {
 
 		if (threads.length > 0) {
 			if (noteComments.length > 0) {
-				const anchoredHeader = listEl.createDiv({cls: 'side-comment-section-header'});
+				const anchoredHeader = listEl.createDiv({cls: 'marginalia-section-header'});
 				setIcon(anchoredHeader.createSpan(), 'message-square');
 				anchoredHeader.createSpan({text: 'Anchored comments'});
 			}
@@ -131,9 +131,9 @@ export class CommentPanelView extends ItemView {
 	}
 
 	private renderToolbar(container: HTMLElement): void {
-		const toolbar = container.createDiv({cls: 'side-comment-toolbar'});
+		const toolbar = container.createDiv({cls: 'marginalia-toolbar'});
 
-		const filterGroup = toolbar.createDiv({cls: 'side-comment-filter-group'});
+		const filterGroup = toolbar.createDiv({cls: 'marginalia-filter-group'});
 
 		type FilterValue = typeof this.filter;
 		const primaryFilters: Array<{label: string; value: FilterValue}> = [
@@ -150,7 +150,7 @@ export class CommentPanelView extends ItemView {
 		for (const f of primaryFilters) {
 			const btn = filterGroup.createEl('button', {
 				text: f.label,
-				cls: `side-comment-filter-btn${this.filter === f.value ? ' is-active' : ''}`,
+				cls: `marginalia-filter-btn${this.filter === f.value ? ' is-active' : ''}`,
 			});
 			btn.addEventListener('click', () => {
 				this.filter = f.value;
@@ -161,7 +161,7 @@ export class CommentPanelView extends ItemView {
 		// Overflow menu button for Active / Orphaned filters
 		const isOverflowActive = overflowFilters.some(f => f.value === this.filter);
 		const moreBtn = filterGroup.createEl('button', {
-			cls: `side-comment-more-btn clickable-icon${isOverflowActive ? ' is-active' : ''}`,
+			cls: `marginalia-more-btn clickable-icon${isOverflowActive ? ' is-active' : ''}`,
 			attr: {'aria-label': 'More filters'},
 		});
 		setIcon(moreBtn, 'more-horizontal');
@@ -185,7 +185,7 @@ export class CommentPanelView extends ItemView {
 
 		// Add note comment button
 		const addBtn = toolbar.createEl('button', {
-			cls: 'side-comment-add-btn clickable-icon',
+			cls: 'marginalia-add-btn clickable-icon',
 			attr: {'aria-label': 'Add note comment'},
 		});
 		setIcon(addBtn, 'plus');
@@ -249,20 +249,20 @@ export class CommentPanelView extends ItemView {
 	private renderNoteComment(container: HTMLElement, nc: NoteComment): void {
 		const resolved = getRootResolution(nc) === 'resolved';
 		const item = container.createDiv({
-			cls: `side-comment-note-item${resolved ? ' side-comment-resolved' : ''}`,
+			cls: `marginalia-note-item${resolved ? ' marginalia-resolved' : ''}`,
 			attr: {'data-comment-id': nc.id},
 		});
 
 		// Note label
-		const label = item.createDiv({cls: 'side-comment-note-label'});
+		const label = item.createDiv({cls: 'marginalia-note-label'});
 		setIcon(label.createSpan(), 'sticky-note');
 		label.createSpan({text: 'Note'});
 		if (resolved) {
-			label.createSpan({text: ' (resolved)', cls: 'side-comment-resolved-badge'});
+			label.createSpan({text: ' (resolved)', cls: 'marginalia-resolved-badge'});
 		}
 
 		// Comment body (rendered as Markdown)
-		const bodyEl = item.createDiv({cls: 'side-comment-body'});
+		const bodyEl = item.createDiv({cls: 'marginalia-body'});
 		void MarkdownRenderer.render(
 			this.plugin.app,
 			nc.body,
@@ -272,18 +272,18 @@ export class CommentPanelView extends ItemView {
 		);
 
 		// Footer: timestamp + actions
-		const footer = item.createDiv({cls: 'side-comment-footer'});
+		const footer = item.createDiv({cls: 'marginalia-footer'});
 
 		const time = new Date(nc.createdAt);
 		footer.createEl('span', {
 			text: time.toLocaleString(),
-			cls: 'side-comment-timestamp',
+			cls: 'marginalia-timestamp',
 		});
 
-		const actions = footer.createDiv({cls: 'side-comment-actions'});
+		const actions = footer.createDiv({cls: 'marginalia-actions'});
 
 		const resolveBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': resolved ? 'Unresolve' : 'Resolve'},
 		});
 		setIcon(resolveBtn, resolved ? 'circle' : 'check-circle');
@@ -292,7 +292,7 @@ export class CommentPanelView extends ItemView {
 		});
 
 		const editBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': 'Edit comment'},
 		});
 		setIcon(editBtn, 'pencil');
@@ -301,7 +301,7 @@ export class CommentPanelView extends ItemView {
 		});
 
 		const deleteBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': 'Delete comment'},
 		});
 		setIcon(deleteBtn, 'trash');
@@ -312,9 +312,9 @@ export class CommentPanelView extends ItemView {
 
 	private renderThread(container: HTMLElement, thread: CommentThread): void {
 		const resolved = getRootResolution(thread.root) === 'resolved';
-		let cls = 'side-comment-thread';
-		if (thread.root.status === 'orphaned') cls += ' side-comment-orphaned';
-		if (resolved) cls += ' side-comment-resolved';
+		let cls = 'marginalia-thread';
+		if (thread.root.status === 'orphaned') cls += ' marginalia-orphaned';
+		if (resolved) cls += ' marginalia-resolved';
 		const threadEl = container.createDiv({
 			cls,
 			attr: {'data-comment-id': thread.root.id},
@@ -323,7 +323,7 @@ export class CommentPanelView extends ItemView {
 		this.renderRootComment(threadEl, thread.root, thread.replies.length);
 
 		if (thread.replies.length > 0) {
-			const repliesEl = threadEl.createDiv({cls: 'side-comment-replies'});
+			const repliesEl = threadEl.createDiv({cls: 'marginalia-replies'});
 			for (const reply of thread.replies) {
 				this.renderReply(repliesEl, reply);
 			}
@@ -332,11 +332,11 @@ export class CommentPanelView extends ItemView {
 
 	private renderRootComment(container: HTMLElement, root: AnchoredComment, replyCount: number): void {
 		const resolved = getRootResolution(root) === 'resolved';
-		const item = container.createDiv({cls: 'side-comment-item'});
+		const item = container.createDiv({cls: 'marginalia-item'});
 
 		// Target text quote
 		const quote = item.createEl('blockquote', {
-			cls: 'side-comment-quote',
+			cls: 'marginalia-quote',
 		});
 		const exactText = root.target.exact.length > 100
 			? root.target.exact.substring(0, 100) + '...'
@@ -346,13 +346,13 @@ export class CommentPanelView extends ItemView {
 		if (root.status === 'orphaned') {
 			quote.createEl('span', {
 				text: ' (orphaned)',
-				cls: 'side-comment-orphaned-badge',
+				cls: 'marginalia-orphaned-badge',
 			});
 		}
 		if (resolved) {
 			quote.createEl('span', {
 				text: ' (resolved)',
-				cls: 'side-comment-resolved-badge',
+				cls: 'marginalia-resolved-badge',
 			});
 		}
 
@@ -362,7 +362,7 @@ export class CommentPanelView extends ItemView {
 		});
 
 		// Comment body (rendered as Markdown)
-		const bodyEl = item.createDiv({cls: 'side-comment-body'});
+		const bodyEl = item.createDiv({cls: 'marginalia-body'});
 		void MarkdownRenderer.render(
 			this.plugin.app,
 			root.body,
@@ -372,18 +372,18 @@ export class CommentPanelView extends ItemView {
 		);
 
 		// Footer: timestamp + actions
-		const footer = item.createDiv({cls: 'side-comment-footer'});
+		const footer = item.createDiv({cls: 'marginalia-footer'});
 
 		const time = new Date(root.createdAt);
 		footer.createEl('span', {
 			text: time.toLocaleString(),
-			cls: 'side-comment-timestamp',
+			cls: 'marginalia-timestamp',
 		});
 
-		const actions = footer.createDiv({cls: 'side-comment-actions'});
+		const actions = footer.createDiv({cls: 'marginalia-actions'});
 
 		const resolveBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': resolved ? 'Unresolve' : 'Resolve'},
 		});
 		setIcon(resolveBtn, resolved ? 'circle' : 'check-circle');
@@ -392,14 +392,14 @@ export class CommentPanelView extends ItemView {
 		});
 
 		const replyBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': `Reply (${replyCount})`},
 		});
 		setIcon(replyBtn, 'message-circle');
 		if (replyCount > 0) {
 			replyBtn.createEl('span', {
 				text: String(replyCount),
-				cls: 'side-comment-reply-count-badge',
+				cls: 'marginalia-reply-count-badge',
 			});
 		}
 		replyBtn.addEventListener('click', () => {
@@ -407,7 +407,7 @@ export class CommentPanelView extends ItemView {
 		});
 
 		const editBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': 'Edit comment'},
 		});
 		setIcon(editBtn, 'pencil');
@@ -416,7 +416,7 @@ export class CommentPanelView extends ItemView {
 		});
 
 		const deleteBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': 'Delete comment'},
 		});
 		setIcon(deleteBtn, 'trash');
@@ -427,12 +427,12 @@ export class CommentPanelView extends ItemView {
 
 	private renderReply(container: HTMLElement, reply: ReplyComment): void {
 		const item = container.createDiv({
-			cls: 'side-comment-reply',
+			cls: 'marginalia-reply',
 			attr: {'data-reply-id': reply.id},
 		});
 
 		// Reply body (rendered as Markdown)
-		const bodyEl = item.createDiv({cls: 'side-comment-body'});
+		const bodyEl = item.createDiv({cls: 'marginalia-body'});
 		void MarkdownRenderer.render(
 			this.plugin.app,
 			reply.body,
@@ -442,18 +442,18 @@ export class CommentPanelView extends ItemView {
 		);
 
 		// Footer: timestamp + actions
-		const footer = item.createDiv({cls: 'side-comment-footer'});
+		const footer = item.createDiv({cls: 'marginalia-footer'});
 
 		const time = new Date(reply.createdAt);
 		footer.createEl('span', {
 			text: time.toLocaleString(),
-			cls: 'side-comment-timestamp',
+			cls: 'marginalia-timestamp',
 		});
 
-		const actions = footer.createDiv({cls: 'side-comment-actions'});
+		const actions = footer.createDiv({cls: 'marginalia-actions'});
 
 		const editBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': 'Edit reply'},
 		});
 		setIcon(editBtn, 'pencil');
@@ -462,7 +462,7 @@ export class CommentPanelView extends ItemView {
 		});
 
 		const deleteBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn clickable-icon',
+			cls: 'marginalia-action-btn clickable-icon',
 			attr: {'aria-label': 'Delete reply'},
 		});
 		setIcon(deleteBtn, 'trash');

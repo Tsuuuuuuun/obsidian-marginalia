@@ -1,17 +1,17 @@
-import type SideCommentPlugin from '../main';
+import type MarginaliaPlugin from '../main';
 import {getRootResolution} from '../types';
 
 export class CommentPopover {
-	private plugin: SideCommentPlugin;
+	private plugin: MarginaliaPlugin;
 	private popoverEl: HTMLElement;
 	private hideTimer: ReturnType<typeof setTimeout> | null = null;
 	private currentCommentIds: string[] = [];
 
-	constructor(plugin: SideCommentPlugin) {
+	constructor(plugin: MarginaliaPlugin) {
 		this.plugin = plugin;
 		this.popoverEl = document.createElement('div');
-		this.popoverEl.className = 'side-comment-popover';
-		this.popoverEl.addClass('side-comment-popover-hidden');
+		this.popoverEl.className = 'marginalia-popover';
+		this.popoverEl.addClass('marginalia-popover-hidden');
 		document.body.appendChild(this.popoverEl);
 
 		this.popoverEl.addEventListener('mouseenter', () => {
@@ -42,25 +42,25 @@ export class CommentPopover {
 			const thread = matchedThreads[i]!;
 
 			if (i > 0) {
-				this.popoverEl.createEl('hr', {cls: 'side-comment-popover-divider'});
+				this.popoverEl.createEl('hr', {cls: 'marginalia-popover-divider'});
 			}
 
 			const resolved = getRootResolution(thread.root) === 'resolved';
 			const item = this.popoverEl.createEl('div', {
-				cls: `side-comment-popover-item${resolved ? ' side-comment-popover-resolved' : ''}`,
+				cls: `marginalia-popover-item${resolved ? ' marginalia-popover-resolved' : ''}`,
 			});
 			const bodyPreview = thread.root.body.length > 150
 				? thread.root.body.substring(0, 150) + '...'
 				: thread.root.body;
 			item.createEl('div', {
 				text: bodyPreview + (resolved ? ' (resolved)' : ''),
-				cls: 'side-comment-popover-body',
+				cls: 'marginalia-popover-body',
 			});
 
 			if (thread.replies.length > 0) {
 				item.createEl('div', {
 					text: `${thread.replies.length} ${thread.replies.length === 1 ? 'reply' : 'replies'}`,
-					cls: 'side-comment-popover-reply-count',
+					cls: 'marginalia-popover-reply-count',
 				});
 			}
 
@@ -73,7 +73,7 @@ export class CommentPopover {
 
 		this.popoverEl.createEl('div', {
 			text: 'Click to view in panel',
-			cls: 'side-comment-popover-hint',
+			cls: 'marginalia-popover-hint',
 		});
 
 		// Position relative to anchor
@@ -82,11 +82,11 @@ export class CommentPopover {
 			'--popover-top': `${rect.bottom + 4}px`,
 			'--popover-left': `${rect.left}px`,
 		});
-		this.popoverEl.removeClass('side-comment-popover-hidden');
+		this.popoverEl.removeClass('marginalia-popover-hidden');
 	}
 
 	hide(): void {
-		this.popoverEl.addClass('side-comment-popover-hidden');
+		this.popoverEl.addClass('marginalia-popover-hidden');
 		this.currentCommentIds = [];
 	}
 

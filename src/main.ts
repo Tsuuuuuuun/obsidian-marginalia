@@ -1,5 +1,5 @@
 import {Editor, MarkdownView, Plugin} from 'obsidian';
-import {DEFAULT_SETTINGS, SideCommentSettings, SideCommentSettingTab} from "./settings";
+import {DEFAULT_SETTINGS, MarginaliaSettings, MarginaliaSettingTab} from "./settings";
 import {CommentStore} from "./storage/CommentStore";
 import {VaultEventHandler} from "./events/VaultEventHandler";
 import {resolveAnchor, findHeadingContext, extractContext} from "./anchoring/TextQuoteSelector";
@@ -11,8 +11,8 @@ import type {CommentData, CommentTarget, ResolvedAnchor} from "./types";
 import {getRootResolution, isRootComment} from "./types";
 import type {Extension} from "@codemirror/state";
 
-export default class SideCommentPlugin extends Plugin {
-	settings: SideCommentSettings;
+export default class MarginaliaPlugin extends Plugin {
+	settings: MarginaliaSettings;
 	store: CommentStore;
 	private popover: CommentPopover;
 	private gutterExtension: Extension;
@@ -120,7 +120,7 @@ export default class SideCommentPlugin extends Plugin {
 		});
 
 		// Settings tab
-		this.addSettingTab(new SideCommentSettingTab(this.app, this));
+		this.addSettingTab(new MarginaliaSettingTab(this.app, this));
 
 		// Debounced anchor re-resolve on document change
 		this.registerEvent(
@@ -193,7 +193,7 @@ export default class SideCommentPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<SideCommentSettings>);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MarginaliaSettings>);
 	}
 
 	async saveSettings() {

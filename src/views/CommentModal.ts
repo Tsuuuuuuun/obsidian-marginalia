@@ -15,19 +15,19 @@ export class CommentModal extends Modal {
 
 	onOpen(): void {
 		const {contentEl} = this;
-		contentEl.addClass('side-comment-modal');
+		contentEl.addClass('marginalia-modal');
 
 		contentEl.createEl('h3', {
 			text: this.modalTitle ?? (this.initialBody ? 'Edit comment' : 'Add comment'),
 		});
 
 		this.textareaEl = contentEl.createEl('textarea', {
-			cls: 'side-comment-modal-textarea',
+			cls: 'marginalia-modal-textarea',
 			attr: {placeholder: 'Write your comment (Markdown supported)...'},
 		});
 		this.textareaEl.value = this.initialBody;
 
-		const buttonRow = contentEl.createDiv({cls: 'side-comment-modal-buttons'});
+		const buttonRow = contentEl.createDiv({cls: 'marginalia-modal-buttons'});
 
 		const saveBtn = buttonRow.createEl('button', {
 			text: 'Save',
@@ -38,7 +38,7 @@ export class CommentModal extends Modal {
 		const cancelBtn = buttonRow.createEl('button', {text: 'Cancel'});
 		cancelBtn.addEventListener('click', () => this.close());
 
-		const hintEl = contentEl.createDiv({cls: 'side-comment-modal-hint'});
+		const hintEl = contentEl.createDiv({cls: 'marginalia-modal-hint'});
 		// Keyboard shortcut hints use key names, not regular UI text
 		// eslint-disable-next-line obsidianmd/ui/sentence-case
 		hintEl.textContent = 'Mod+Enter to save, Esc to cancel';

@@ -12,7 +12,7 @@ import {
 	type Extension,
 } from '@codemirror/state';
 import { setIcon } from 'obsidian';
-import type SideCommentPlugin from '../main';
+import type MarginaliaPlugin from '../main';
 
 interface CommentLineInfo {
 	line: number;
@@ -27,9 +27,9 @@ class CommentIconWidget extends WidgetType {
 	private commentIds: string[];
 	private count: number;
 	private allResolved: boolean;
-	private plugin: SideCommentPlugin;
+	private plugin: MarginaliaPlugin;
 
-	constructor(plugin: SideCommentPlugin, commentIds: string[], count: number, allResolved: boolean) {
+	constructor(plugin: MarginaliaPlugin, commentIds: string[], count: number, allResolved: boolean) {
 		super();
 		this.plugin = plugin;
 		this.commentIds = commentIds;
@@ -46,16 +46,16 @@ class CommentIconWidget extends WidgetType {
 
 	toDOM(): HTMLElement {
 		const el = document.createElement('span');
-		el.className = 'side-comment-gutter-icon';
+		el.className = 'marginalia-gutter-icon';
 		if (this.allResolved) {
-			el.className += ' side-comment-gutter-resolved';
+			el.className += ' marginalia-gutter-resolved';
 		}
 		el.setAttribute('aria-label', `${this.count} comment${this.count > 1 ? 's' : ''}`);
 		setIcon(el, this.allResolved ? 'check-circle' : 'message-square');
 
 		if (this.count > 1) {
 			const badge = document.createElement('span');
-			badge.className = 'side-comment-badge';
+			badge.className = 'marginalia-badge';
 			badge.textContent = String(this.count);
 			el.appendChild(badge);
 		}
@@ -79,7 +79,7 @@ class CommentIconWidget extends WidgetType {
 }
 
 function buildDecorations(
-	plugin: SideCommentPlugin,
+	plugin: MarginaliaPlugin,
 	infos: CommentLineInfo[],
 	doc: { lines: number; line(n: number): { from: number } }
 ): DecorationSet {
@@ -113,7 +113,7 @@ function buildDecorations(
 	return Decoration.set(ranges, true);
 }
 
-export function createCommentGutter(plugin: SideCommentPlugin): Extension {
+export function createCommentGutter(plugin: MarginaliaPlugin): Extension {
 	const gutterField = StateField.define<CommentLineInfo[]>({
 		create(): CommentLineInfo[] {
 			return [];

@@ -1,24 +1,24 @@
 import {App, PluginSettingTab, Setting} from "obsidian";
-import type SideCommentPlugin from "./main";
+import type MarginaliaPlugin from "./main";
 
-export interface SideCommentSettings {
+export interface MarginaliaSettings {
 	commentSortOrder: 'position' | 'created';
 	showGutterIcons: boolean;
 	fuzzyMatchThreshold: number;
 	orphanHandling: 'keep' | 'delete';
 }
 
-export const DEFAULT_SETTINGS: SideCommentSettings = {
+export const DEFAULT_SETTINGS: MarginaliaSettings = {
 	commentSortOrder: 'position',
 	showGutterIcons: true,
 	fuzzyMatchThreshold: 0.3,
 	orphanHandling: 'keep',
 };
 
-export class SideCommentSettingTab extends PluginSettingTab {
-	plugin: SideCommentPlugin;
+export class MarginaliaSettingTab extends PluginSettingTab {
+	plugin: MarginaliaPlugin;
 
-	constructor(app: App, plugin: SideCommentPlugin) {
+	constructor(app: App, plugin: MarginaliaPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

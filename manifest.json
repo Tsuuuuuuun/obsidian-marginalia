@@ -1,9 +1,9 @@
 {
-	"id": "side-comment",
-	"name": "Side Comment",
+	"id": "marginalia",
+	"name": "Marginalia",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Add non-destructive annotations to Markdown notes. Comments are stored in external sidecar JSON files, never modifying the original files.",
+	"description": "Add non-destructive margin comments and annotations to your notes. Anchor comments to specific text without modifying the original file — stored as external sidecar JSON.",
 	"author": "",
 	"authorUrl": "",
 	"isDesktopOnly": false

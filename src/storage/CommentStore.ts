@@ -159,7 +159,7 @@ export class CommentStore {
 		// Warn about orphaned replies (parent not found)
 		for (const [parentId] of replyMap) {
 			if (!roots.some(r => r.id === parentId)) {
-				console.warn(`[side-comment] Reply references non-existent parent: ${parentId}`);
+				console.warn(`[marginalia] Reply references non-existent parent: ${parentId}`);
 			}
 		}
 

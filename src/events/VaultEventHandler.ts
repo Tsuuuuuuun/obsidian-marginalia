@@ -1,12 +1,12 @@
 import {TFile} from 'obsidian';
-import type SideCommentPlugin from '../main';
+import type MarginaliaPlugin from '../main';
 import type {CommentStore} from '../storage/CommentStore';
 
 export class VaultEventHandler {
-	private plugin: SideCommentPlugin;
+	private plugin: MarginaliaPlugin;
 	private store: CommentStore;
 
-	constructor(plugin: SideCommentPlugin, store: CommentStore) {
+	constructor(plugin: MarginaliaPlugin, store: CommentStore) {
 		this.plugin = plugin;
 		this.store = store;
 	}
