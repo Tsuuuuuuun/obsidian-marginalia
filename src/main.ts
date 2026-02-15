@@ -5,6 +5,7 @@ import {VaultEventHandler} from "./events/VaultEventHandler";
 import {resolveAnchor, findHeadingContext, extractContext} from "./anchoring/TextQuoteSelector";
 import {CommentPopover} from "./editor/PopoverExtension";
 import {createCommentGutter, updateCommentPositions} from "./editor/GutterExtension";
+import {ReadingGutter} from "./editor/ReadingGutter";
 import {CommentPanelView, VIEW_TYPE_COMMENT_PANEL} from "./views/CommentPanelView";
 import {CommentModal} from "./views/CommentModal";
 import type {CommentData, CommentTarget, ResolvedAnchor} from "./types";
@@ -17,7 +18,23 @@ export default class MarginaliaPlugin extends Plugin {
 	store: CommentStore;
 	private popover: CommentPopover;
 	private gutterExtension: Extension;
+	private readingGutter: ReadingGutter;
 	private resolveDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	private cachedAnchors: Map<string, ResolvedAnchor> = new Map();
+	private cachedComments: CommentData[] = [];
+	private cachedFilePath: string | null = null;
+
+	getCachedAnchors(): Map<string, ResolvedAnchor> {
+		return this.cachedAnchors;
+	}
+
+	getCachedComments(): CommentData[] {
+		return this.cachedComments;
+	}
+
+	getCachedFilePath(): string | null {
+		return this.cachedFilePath;
+	}
 
 	async onload() {
 		await this.loadSettings();
@@ -39,6 +56,12 @@ export default class MarginaliaPlugin extends Plugin {
 		// Register CM6 gutter extension
 		this.gutterExtension = createCommentGutter(this);
 		this.registerEditorExtension(this.gutterExtension);
+
+		// Register Reading View gutter
+		this.readingGutter = new ReadingGutter(this);
+		this.registerMarkdownPostProcessor((el, ctx) => {
+			this.readingGutter.processSection(el, ctx);
+		});
 
 		// Commands
 		this.addCommand({
@@ -138,6 +161,13 @@ export default class MarginaliaPlugin extends Plugin {
 		// Update gutter on active leaf change
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
+				void this.updateGutterForActiveFile();
+			})
+		);
+
+		// Update gutter on mode switch (source ↔ preview)
+		this.registerEvent(
+			this.app.workspace.on('layout-change', () => {
 				void this.updateGutterForActiveFile();
 			})
 		);
@@ -283,10 +313,21 @@ export default class MarginaliaPlugin extends Plugin {
 		const mdView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (!mdView) return;
 
-		const docText = mdView.editor.getValue();
+		const docText = mdView.getMode() === 'source'
+			? mdView.editor.getValue()
+			: await this.app.vault.read(activeFile);
 		const anchors = await this.store.resolveAnchors(filePath, docText, this.settings.fuzzyMatchThreshold);
 		const comments = await this.store.getComments(filePath);
-		this.dispatchGutterUpdate(anchors, comments);
+
+		this.cachedAnchors = anchors;
+		this.cachedComments = comments;
+		this.cachedFilePath = filePath;
+
+		if (mdView.getMode() === 'preview') {
+			this.readingGutter.refreshActiveView();
+		} else {
+			this.dispatchGutterUpdate(anchors, comments);
+		}
 		this.refreshPanel();
 	}
 
@@ -297,10 +338,21 @@ export default class MarginaliaPlugin extends Plugin {
 		const mdView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (!mdView) return;
 
-		const docText = mdView.editor.getValue();
+		const docText = mdView.getMode() === 'source'
+			? mdView.editor.getValue()
+			: await this.app.vault.read(file);
 		const anchors = await this.store.resolveAnchors(file.path, docText, this.settings.fuzzyMatchThreshold);
 		const comments = await this.store.getComments(file.path);
-		this.dispatchGutterUpdate(anchors, comments);
+
+		this.cachedAnchors = anchors;
+		this.cachedComments = comments;
+		this.cachedFilePath = file.path;
+
+		if (mdView.getMode() === 'preview') {
+			this.readingGutter.refreshActiveView();
+		} else {
+			this.dispatchGutterUpdate(anchors, comments);
+		}
 	}
 
 	private dispatchGutterUpdate(anchors: Map<string, ResolvedAnchor>, comments: CommentData[]): void {

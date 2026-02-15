@@ -402,6 +402,17 @@
 	opacity: 0.5;
 }
 
+/* Reading View gutter icon positioning */
+.marginalia-has-comment {
+	position: relative;
+}
+
+.markdown-preview-view .marginalia-rv-icon {
+	position: absolute;
+	left: -28px;
+	top: 4px;
+}
+
 /* Settings: migrate button spin animation */
 .marginalia-spin .clickable-icon {
 	animation: marginalia-spin 1s linear infinite;
