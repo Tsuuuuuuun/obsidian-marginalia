@@ -1,4 +1,4 @@
-import {Editor, MarkdownView, Plugin} from 'obsidian';
+import {Editor, MarkdownView, normalizePath, Plugin} from 'obsidian';
 import {DEFAULT_SETTINGS, MarginaliaSettings, MarginaliaSettingTab} from "./settings";
 import {CommentStore} from "./storage/CommentStore";
 import {VaultEventHandler} from "./events/VaultEventHandler";
@@ -39,10 +39,12 @@ export default class MarginaliaPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		const basePath = this.settings.storageLocation === 'vault'
-			? '.marginalia'
-			: `${this.manifest.dir ?? ''}/comments`;
-		this.store = new CommentStore(this.app.vault.adapter, basePath);
+		const basePath = normalizePath(
+			this.settings.storageLocation === 'vault'
+				? '.marginalia'
+				: `${this.manifest.dir ?? ''}/comments`
+		);
+		this.store = new CommentStore(this.app.vault, basePath);
 		this.store.setAnchorResolver(resolveAnchor);
 		await this.store.initialize();
 
