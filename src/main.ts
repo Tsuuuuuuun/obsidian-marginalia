@@ -9,6 +9,7 @@ import {CommentPanelView, VIEW_TYPE_COMMENT_PANEL} from "./views/CommentPanelVie
 import {CommentModal} from "./views/CommentModal";
 import type {CommentData, CommentTarget, ResolvedAnchor} from "./types";
 import {getRootResolution, isRootComment} from "./types";
+import {findNavigationTarget} from "./comment/navigation";
 import type {Extension} from "@codemirror/state";
 
 export default class MarginaliaPlugin extends Plugin {
@@ -251,27 +252,14 @@ export default class MarginaliaPlugin extends Plugin {
 	private async navigateComment(editor: Editor, filePath: string, direction: 'next' | 'prev'): Promise<void> {
 		const docText = editor.getValue();
 		const anchors = await this.store.resolveAnchors(filePath, docText, this.settings.fuzzyMatchThreshold);
-
-		if (anchors.size === 0) return;
-
-		const sorted = [...anchors.entries()].sort((a, b) => a[1].from - b[1].from);
 		const currentOffset = editor.posToOffset(editor.getCursor());
 
-		let target: [string, ResolvedAnchor] | undefined;
-
-		if (direction === 'next') {
-			target = sorted.find(([, a]) => a.from > currentOffset);
-			if (!target) target = sorted[0]; // Wrap around
-		} else {
-			target = [...sorted].reverse().find(([, a]) => a.from < currentOffset);
-			if (!target) target = sorted[sorted.length - 1]; // Wrap around
-		}
-
+		const target = findNavigationTarget(anchors, currentOffset, direction);
 		if (target) {
-			const pos = editor.offsetToPos(target[1].from);
+			const pos = editor.offsetToPos(target.from);
 			editor.setCursor(pos);
 			editor.scrollIntoView(
-				{from: pos, to: editor.offsetToPos(target[1].to)},
+				{from: pos, to: editor.offsetToPos(target.to)},
 				true
 			);
 		}

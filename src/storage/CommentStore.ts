@@ -1,5 +1,5 @@
 import type {DataAdapter} from 'obsidian';
-import type {AnchoredComment, CommentData, CommentFile, CommentTarget, CommentThread, NoteComment, PanelData, ReplyComment, ResolvedAnchor, RootComment} from '../types';
+import type {AnchoredComment, CommentData, CommentFile, CommentTarget, NoteComment, ReplyComment, ResolvedAnchor, RootComment} from '../types';
 import {isReplyComment, isAnchoredComment, isNoteComment, isRootComment, getRootResolution} from '../types';
 import {PathIndex} from './PathIndex';
 
@@ -137,54 +137,6 @@ export class CommentStore {
 
 		this.scheduleSave(notePath);
 		return true;
-	}
-
-	getThreads(comments: CommentData[]): CommentThread[] {
-		const replyMap = new Map<string, ReplyComment[]>();
-		const roots: AnchoredComment[] = [];
-
-		for (const c of comments) {
-			if (isAnchoredComment(c)) {
-				roots.push(c);
-			} else if (isReplyComment(c)) {
-				const existing = replyMap.get(c.parentId);
-				if (existing) {
-					existing.push(c);
-				} else {
-					replyMap.set(c.parentId, [c]);
-				}
-			}
-		}
-
-		// Warn about orphaned replies (parent not found)
-		for (const [parentId] of replyMap) {
-			if (!roots.some(r => r.id === parentId)) {
-				console.warn(`[marginalia] Reply references non-existent parent: ${parentId}`);
-			}
-		}
-
-		const threads: CommentThread[] = [];
-		for (const root of roots) {
-			const replies = replyMap.get(root.id) ?? [];
-			replies.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-			threads.push({root, replies});
-		}
-
-		return threads;
-	}
-
-	getPanelData(comments: CommentData[]): PanelData {
-		const noteComments: NoteComment[] = [];
-		for (const c of comments) {
-			if (isNoteComment(c)) {
-				noteComments.push(c);
-			}
-		}
-		noteComments.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-		return {
-			noteComments,
-			threads: this.getThreads(comments),
-		};
 	}
 
 	async resolveAnchors(notePath: string, docText: string, threshold: number): Promise<Map<string, ResolvedAnchor>> {

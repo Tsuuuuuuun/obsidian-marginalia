@@ -2,6 +2,7 @@ import {ItemView, MarkdownRenderer, MarkdownView, Menu, WorkspaceLeaf, TFile, se
 import type MarginaliaPlugin from '../main';
 import type {AnchoredComment, CommentData, CommentThread, NoteComment, PanelData, ReplyComment, RootComment, ResolvedAnchor} from '../types';
 import {isReplyComment, isNoteComment, getRootResolution} from '../types';
+import {getPanelData, filterPanelData} from '../comment/threading';
 import {CommentModal} from './CommentModal';
 
 export const VIEW_TYPE_COMMENT_PANEL = 'marginalia-panel';
@@ -211,39 +212,8 @@ export class CommentPanelView extends ItemView {
 	}
 
 	private getFilteredPanelData(): PanelData {
-		const panelData = this.plugin.store.getPanelData(this.comments);
-		let {noteComments} = panelData;
-		let {threads} = panelData;
-
-		if (this.filter === 'active') {
-			threads = threads.filter(t => t.root.status === 'active');
-			// NoteComment always visible in "active" filter
-		} else if (this.filter === 'orphaned') {
-			threads = threads.filter(t => t.root.status === 'orphaned');
-			// NoteComment hidden in "orphaned" filter (they can't be orphaned)
-			noteComments = [];
-		} else if (this.filter === 'open') {
-			threads = threads.filter(t => getRootResolution(t.root) === 'open');
-			noteComments = noteComments.filter(nc => getRootResolution(nc) === 'open');
-		} else if (this.filter === 'resolved') {
-			threads = threads.filter(t => getRootResolution(t.root) === 'resolved');
-			noteComments = noteComments.filter(nc => getRootResolution(nc) === 'resolved');
-		}
-
-		if (this.plugin.settings.commentSortOrder === 'position') {
-			threads.sort((a, b) => {
-				const anchorA = this.anchors.get(a.root.id);
-				const anchorB = this.anchors.get(b.root.id);
-				if (!anchorA && !anchorB) return 0;
-				if (!anchorA) return 1;
-				if (!anchorB) return -1;
-				return anchorA.from - anchorB.from;
-			});
-		} else {
-			threads.sort((a, b) => a.root.createdAt.localeCompare(b.root.createdAt));
-		}
-
-		return {noteComments, threads};
+		const panelData = getPanelData(this.comments);
+		return filterPanelData(panelData, this.filter, this.plugin.settings.commentSortOrder, this.anchors);
 	}
 
 	private renderNoteComment(container: HTMLElement, nc: NoteComment): void {

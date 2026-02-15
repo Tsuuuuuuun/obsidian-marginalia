@@ -1,5 +1,6 @@
 import type MarginaliaPlugin from '../main';
 import {getRootResolution} from '../types';
+import {getThreads} from '../comment/threading';
 
 export class CommentPopover {
 	private plugin: MarginaliaPlugin;
@@ -30,7 +31,7 @@ export class CommentPopover {
 		if (!file) return;
 
 		const allComments = await this.plugin.store.getComments(file.path);
-		const threads = this.plugin.store.getThreads(allComments);
+		const threads = getThreads(allComments);
 
 		// Only show threads whose root is in the requested commentIds
 		const matchedThreads = threads.filter(t => commentIds.includes(t.root.id));
