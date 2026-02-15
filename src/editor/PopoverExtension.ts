@@ -1,4 +1,5 @@
 import type SideCommentPlugin from '../main';
+import {getRootResolution} from '../types';
 
 export class CommentPopover {
 	private plugin: SideCommentPlugin;
@@ -44,12 +45,15 @@ export class CommentPopover {
 				this.popoverEl.createEl('hr', {cls: 'side-comment-popover-divider'});
 			}
 
-			const item = this.popoverEl.createEl('div', {cls: 'side-comment-popover-item'});
+			const resolved = getRootResolution(thread.root) === 'resolved';
+			const item = this.popoverEl.createEl('div', {
+				cls: `side-comment-popover-item${resolved ? ' side-comment-popover-resolved' : ''}`,
+			});
 			const bodyPreview = thread.root.body.length > 150
 				? thread.root.body.substring(0, 150) + '...'
 				: thread.root.body;
 			item.createEl('div', {
-				text: bodyPreview,
+				text: bodyPreview + (resolved ? ' (resolved)' : ''),
 				cls: 'side-comment-popover-body',
 			});
 

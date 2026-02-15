@@ -12,6 +12,7 @@ export interface AnchoredComment {
 	body: string;
 	target: CommentTarget;
 	status: 'active' | 'orphaned';
+	resolution?: 'open' | 'resolved';
 	createdAt: string;
 	updatedAt: string;
 }
@@ -20,6 +21,7 @@ export interface NoteComment {
 	kind: 'note';
 	id: string;
 	body: string;
+	resolution?: 'open' | 'resolved';
 	createdAt: string;
 	updatedAt: string;
 }
@@ -50,6 +52,10 @@ export function isAnchoredComment(c: CommentData): c is AnchoredComment {
 
 export function isNoteComment(c: CommentData): c is NoteComment {
 	return 'kind' in c && (c as NoteComment).kind === 'note';
+}
+
+export function getRootResolution(c: RootComment): 'open' | 'resolved' {
+	return c.resolution ?? 'open';
 }
 
 export interface CommentThread {

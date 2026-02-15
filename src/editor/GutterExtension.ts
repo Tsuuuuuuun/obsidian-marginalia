@@ -18,6 +18,7 @@ interface CommentLineInfo {
 	line: number;
 	commentId: string;
 	count: number;
+	allResolved: boolean;
 }
 
 export const updateCommentPositions = StateEffect.define<CommentLineInfo[]>();
@@ -25,17 +26,20 @@ export const updateCommentPositions = StateEffect.define<CommentLineInfo[]>();
 class CommentIconWidget extends WidgetType {
 	private commentIds: string[];
 	private count: number;
+	private allResolved: boolean;
 	private plugin: SideCommentPlugin;
 
-	constructor(plugin: SideCommentPlugin, commentIds: string[], count: number) {
+	constructor(plugin: SideCommentPlugin, commentIds: string[], count: number, allResolved: boolean) {
 		super();
 		this.plugin = plugin;
 		this.commentIds = commentIds;
 		this.count = count;
+		this.allResolved = allResolved;
 	}
 
 	eq(other: CommentIconWidget): boolean {
 		return this.count === other.count
+			&& this.allResolved === other.allResolved
 			&& this.commentIds.length === other.commentIds.length
 			&& this.commentIds.every((id, i) => id === other.commentIds[i]);
 	}
@@ -43,8 +47,11 @@ class CommentIconWidget extends WidgetType {
 	toDOM(): HTMLElement {
 		const el = document.createElement('span');
 		el.className = 'side-comment-gutter-icon';
+		if (this.allResolved) {
+			el.className += ' side-comment-gutter-resolved';
+		}
 		el.setAttribute('aria-label', `${this.count} comment${this.count > 1 ? 's' : ''}`);
-		setIcon(el, 'message-square');
+		setIcon(el, this.allResolved ? 'check-circle' : 'message-square');
 
 		if (this.count > 1) {
 			const badge = document.createElement('span');
@@ -77,24 +84,25 @@ function buildDecorations(
 	doc: { lines: number; line(n: number): { from: number } }
 ): DecorationSet {
 	// Group by line, collecting all commentIds
-	const byLine = new Map<number, {commentIds: string[]; count: number}>();
+	const byLine = new Map<number, {commentIds: string[]; count: number; allResolved: boolean}>();
 	for (const info of infos) {
 		const existing = byLine.get(info.line);
 		if (existing) {
 			existing.commentIds.push(info.commentId);
 			existing.count += info.count;
+			existing.allResolved = existing.allResolved && info.allResolved;
 		} else {
-			byLine.set(info.line, {commentIds: [info.commentId], count: info.count});
+			byLine.set(info.line, {commentIds: [info.commentId], count: info.count, allResolved: info.allResolved});
 		}
 	}
 
 	const sortedLines = [...byLine.entries()].sort((a, b) => a[0] - b[0]);
 
 	const ranges: {from: number; to: number; value: Decoration}[] = [];
-	for (const [lineNum, {commentIds, count}] of sortedLines) {
+	for (const [lineNum, {commentIds, count, allResolved}] of sortedLines) {
 		if (lineNum < 0 || lineNum >= doc.lines) continue;
 		const lineStart = doc.line(lineNum + 1).from;
-		const widget = new CommentIconWidget(plugin, commentIds, count);
+		const widget = new CommentIconWidget(plugin, commentIds, count, allResolved);
 		ranges.push({
 			from: lineStart,
 			to: lineStart,

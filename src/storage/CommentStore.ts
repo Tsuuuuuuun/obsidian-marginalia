@@ -1,6 +1,6 @@
 import type {DataAdapter} from 'obsidian';
-import type {AnchoredComment, CommentData, CommentFile, CommentTarget, CommentThread, NoteComment, PanelData, ReplyComment, ResolvedAnchor} from '../types';
-import {isReplyComment, isAnchoredComment, isNoteComment} from '../types';
+import type {AnchoredComment, CommentData, CommentFile, CommentTarget, CommentThread, NoteComment, PanelData, ReplyComment, ResolvedAnchor, RootComment} from '../types';
+import {isReplyComment, isAnchoredComment, isNoteComment, isRootComment, getRootResolution} from '../types';
 import {PathIndex} from './PathIndex';
 
 export class CommentStore {
@@ -43,6 +43,7 @@ export class CommentStore {
 			body,
 			target,
 			status: 'active',
+			resolution: 'open',
 			createdAt: now,
 			updatedAt: now,
 		};
@@ -58,6 +59,7 @@ export class CommentStore {
 			kind: 'note',
 			id: generateId(),
 			body,
+			resolution: 'open',
 			createdAt: now,
 			updatedAt: now,
 		};
@@ -94,6 +96,19 @@ export class CommentStore {
 		if (!comment) return null;
 
 		comment.body = body;
+		comment.updatedAt = new Date().toISOString();
+		this.scheduleSave(notePath);
+		return comment;
+	}
+
+	async toggleResolution(notePath: string, commentId: string): Promise<RootComment | null> {
+		const file = await this.loadCommentFile(notePath);
+		if (!file) return null;
+
+		const comment = file.comments.find(c => c.id === commentId);
+		if (!comment || !isRootComment(comment)) return null;
+
+		comment.resolution = getRootResolution(comment) === 'open' ? 'resolved' : 'open';
 		comment.updatedAt = new Date().toISOString();
 		this.scheduleSave(notePath);
 		return comment;

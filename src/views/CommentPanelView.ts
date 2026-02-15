@@ -1,7 +1,7 @@
 import {ItemView, MarkdownRenderer, MarkdownView, WorkspaceLeaf, TFile, setIcon} from 'obsidian';
 import type SideCommentPlugin from '../main';
-import type {AnchoredComment, CommentData, CommentThread, NoteComment, PanelData, ReplyComment, ResolvedAnchor} from '../types';
-import {isReplyComment, isNoteComment} from '../types';
+import type {AnchoredComment, CommentData, CommentThread, NoteComment, PanelData, ReplyComment, RootComment, ResolvedAnchor} from '../types';
+import {isReplyComment, isNoteComment, getRootResolution} from '../types';
 import {CommentModal} from './CommentModal';
 
 export const VIEW_TYPE_COMMENT_PANEL = 'side-comment-panel';
@@ -11,7 +11,7 @@ export class CommentPanelView extends ItemView {
 	private currentFile: TFile | null = null;
 	private comments: CommentData[] = [];
 	private anchors: Map<string, ResolvedAnchor> = new Map();
-	private filter: 'all' | 'active' | 'orphaned' = 'all';
+	private filter: 'all' | 'open' | 'resolved' | 'active' | 'orphaned' = 'all';
 
 	constructor(leaf: WorkspaceLeaf, plugin: SideCommentPlugin) {
 		super(leaf);
@@ -135,8 +135,10 @@ export class CommentPanelView extends ItemView {
 
 		const filterGroup = toolbar.createDiv({cls: 'side-comment-filter-group'});
 
-		const filters: Array<{label: string; value: 'all' | 'active' | 'orphaned'}> = [
+		const filters: Array<{label: string; value: 'all' | 'open' | 'resolved' | 'active' | 'orphaned'}> = [
 			{label: 'All', value: 'all'},
+			{label: 'Open', value: 'open'},
+			{label: 'Resolved', value: 'resolved'},
 			{label: 'Active', value: 'active'},
 			{label: 'Orphaned', value: 'orphaned'},
 		];
@@ -191,6 +193,12 @@ export class CommentPanelView extends ItemView {
 			threads = threads.filter(t => t.root.status === 'orphaned');
 			// NoteComment hidden in "orphaned" filter (they can't be orphaned)
 			noteComments = [];
+		} else if (this.filter === 'open') {
+			threads = threads.filter(t => getRootResolution(t.root) === 'open');
+			noteComments = noteComments.filter(nc => getRootResolution(nc) === 'open');
+		} else if (this.filter === 'resolved') {
+			threads = threads.filter(t => getRootResolution(t.root) === 'resolved');
+			noteComments = noteComments.filter(nc => getRootResolution(nc) === 'resolved');
 		}
 
 		if (this.plugin.settings.commentSortOrder === 'position') {
@@ -210,8 +218,9 @@ export class CommentPanelView extends ItemView {
 	}
 
 	private renderNoteComment(container: HTMLElement, nc: NoteComment): void {
+		const resolved = getRootResolution(nc) === 'resolved';
 		const item = container.createDiv({
-			cls: 'side-comment-note-item',
+			cls: `side-comment-note-item${resolved ? ' side-comment-resolved' : ''}`,
 			attr: {'data-comment-id': nc.id},
 		});
 
@@ -219,6 +228,9 @@ export class CommentPanelView extends ItemView {
 		const label = item.createDiv({cls: 'side-comment-note-label'});
 		setIcon(label.createSpan(), 'sticky-note');
 		label.createSpan({text: 'Note'});
+		if (resolved) {
+			label.createSpan({text: ' (resolved)', cls: 'side-comment-resolved-badge'});
+		}
 
 		// Comment body (rendered as Markdown)
 		const bodyEl = item.createDiv({cls: 'side-comment-body'});
@@ -241,6 +253,15 @@ export class CommentPanelView extends ItemView {
 
 		const actions = footer.createDiv({cls: 'side-comment-actions'});
 
+		const resolveBtn = actions.createEl('button', {
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': resolved ? 'Unresolve' : 'Resolve'},
+		});
+		setIcon(resolveBtn, resolved ? 'circle' : 'check-circle');
+		resolveBtn.addEventListener('click', () => {
+			void this.toggleResolution(nc);
+		});
+
 		const editBtn = actions.createEl('button', {
 			cls: 'side-comment-action-btn clickable-icon',
 			attr: {'aria-label': 'Edit comment'},
@@ -261,8 +282,12 @@ export class CommentPanelView extends ItemView {
 	}
 
 	private renderThread(container: HTMLElement, thread: CommentThread): void {
+		const resolved = getRootResolution(thread.root) === 'resolved';
+		let cls = 'side-comment-thread';
+		if (thread.root.status === 'orphaned') cls += ' side-comment-orphaned';
+		if (resolved) cls += ' side-comment-resolved';
 		const threadEl = container.createDiv({
-			cls: `side-comment-thread${thread.root.status === 'orphaned' ? ' side-comment-orphaned' : ''}`,
+			cls,
 			attr: {'data-comment-id': thread.root.id},
 		});
 
@@ -277,6 +302,7 @@ export class CommentPanelView extends ItemView {
 	}
 
 	private renderRootComment(container: HTMLElement, root: AnchoredComment, replyCount: number): void {
+		const resolved = getRootResolution(root) === 'resolved';
 		const item = container.createDiv({cls: 'side-comment-item'});
 
 		// Target text quote
@@ -292,6 +318,12 @@ export class CommentPanelView extends ItemView {
 			quote.createEl('span', {
 				text: ' (orphaned)',
 				cls: 'side-comment-orphaned-badge',
+			});
+		}
+		if (resolved) {
+			quote.createEl('span', {
+				text: ' (resolved)',
+				cls: 'side-comment-resolved-badge',
 			});
 		}
 
@@ -320,6 +352,15 @@ export class CommentPanelView extends ItemView {
 		});
 
 		const actions = footer.createDiv({cls: 'side-comment-actions'});
+
+		const resolveBtn = actions.createEl('button', {
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': resolved ? 'Unresolve' : 'Resolve'},
+		});
+		setIcon(resolveBtn, resolved ? 'circle' : 'check-circle');
+		resolveBtn.addEventListener('click', () => {
+			void this.toggleResolution(root);
+		});
 
 		const replyBtn = actions.createEl('button', {
 			cls: 'side-comment-action-btn clickable-icon',
@@ -451,6 +492,15 @@ export class CommentPanelView extends ItemView {
 			},
 			comment.body
 		).open();
+	}
+
+	private async toggleResolution(comment: RootComment): Promise<void> {
+		if (!this.currentFile) return;
+		await this.plugin.store.toggleResolution(this.currentFile.path, comment.id);
+		await this.refresh();
+		if (!isNoteComment(comment)) {
+			this.plugin.updateGutterEffects();
+		}
 	}
 
 	private async deleteComment(comment: CommentData): Promise<void> {

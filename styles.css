@@ -350,3 +350,33 @@
 	opacity: 0.7;
 	border-left-color: var(--text-error);
 }
+
+/* Resolved: panel thread/note items */
+.side-comment-resolved {
+	opacity: 0.6;
+}
+
+.side-comment-resolved-badge {
+	font-size: var(--font-smallest);
+	color: var(--text-success);
+	margin-left: 4px;
+}
+
+/* Resolved: gutter icon */
+.side-comment-gutter-resolved {
+	opacity: 0.4;
+}
+
+.side-comment-gutter-resolved svg {
+	color: var(--text-success);
+}
+
+/* Resolved: popover */
+.side-comment-popover-resolved {
+	opacity: 0.7;
+}
+
+/* Resolved + Orphaned combination */
+.side-comment-resolved.side-comment-orphaned {
+	opacity: 0.5;
+}

@@ -7,7 +7,8 @@ import {CommentPopover} from "./editor/PopoverExtension";
 import {createCommentGutter, updateCommentPositions} from "./editor/GutterExtension";
 import {CommentPanelView, VIEW_TYPE_COMMENT_PANEL} from "./views/CommentPanelView";
 import {CommentModal} from "./views/CommentModal";
-import type {CommentTarget, ResolvedAnchor} from "./types";
+import type {CommentData, CommentTarget, ResolvedAnchor} from "./types";
+import {getRootResolution, isRootComment} from "./types";
 import type {Extension} from "@codemirror/state";
 
 export default class SideCommentPlugin extends Plugin {
@@ -293,7 +294,8 @@ export default class SideCommentPlugin extends Plugin {
 
 		const docText = mdView.editor.getValue();
 		const anchors = await this.store.resolveAnchors(filePath, docText, this.settings.fuzzyMatchThreshold);
-		this.dispatchGutterUpdate(anchors);
+		const comments = await this.store.getComments(filePath);
+		this.dispatchGutterUpdate(anchors, comments);
 		this.refreshPanel();
 	}
 
@@ -306,10 +308,11 @@ export default class SideCommentPlugin extends Plugin {
 
 		const docText = mdView.editor.getValue();
 		const anchors = await this.store.resolveAnchors(file.path, docText, this.settings.fuzzyMatchThreshold);
-		this.dispatchGutterUpdate(anchors);
+		const comments = await this.store.getComments(file.path);
+		this.dispatchGutterUpdate(anchors, comments);
 	}
 
-	private dispatchGutterUpdate(anchors: Map<string, ResolvedAnchor>): void {
+	private dispatchGutterUpdate(anchors: Map<string, ResolvedAnchor>, comments: CommentData[]): void {
 		const mdView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (!mdView) return;
 
@@ -318,10 +321,19 @@ export default class SideCommentPlugin extends Plugin {
 		const cmEditor = editorObj['cm'] as {dispatch: (spec: {effects: unknown}) => void} | undefined;
 		if (!cmEditor) return;
 
+		// Build a map of commentId → resolution for root comments
+		const resolutionMap = new Map<string, 'open' | 'resolved'>();
+		for (const c of comments) {
+			if (isRootComment(c)) {
+				resolutionMap.set(c.id, getRootResolution(c));
+			}
+		}
+
 		const infos = [...anchors.entries()].map(([commentId, anchor]) => ({
 			line: anchor.line,
 			commentId,
 			count: 1,
+			allResolved: resolutionMap.get(commentId) === 'resolved',
 		}));
 
 		cmEditor.dispatch({
