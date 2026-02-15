@@ -1,6 +1,7 @@
 import {ItemView, MarkdownRenderer, MarkdownView, WorkspaceLeaf, TFile, setIcon} from 'obsidian';
 import type SideCommentPlugin from '../main';
-import type {CommentData, ResolvedAnchor} from '../types';
+import type {CommentData, CommentThread, ReplyComment, ResolvedAnchor, RootComment} from '../types';
+import {isReplyComment} from '../types';
 import {CommentModal} from './CommentModal';
 
 export const VIEW_TYPE_COMMENT_PANEL = 'side-comment-panel';
@@ -68,7 +69,11 @@ export class CommentPanelView extends ItemView {
 	}
 
 	scrollToComment(commentId: string): void {
-		const el = this.contentEl.querySelector(`[data-comment-id="${commentId}"]`);
+		// If the commentId is a reply, find its parent thread element
+		const reply = this.comments.find(c => c.id === commentId && isReplyComment(c));
+		const targetId = reply && isReplyComment(reply) ? reply.parentId : commentId;
+
+		const el = this.contentEl.querySelector(`[data-comment-id="${targetId}"]`);
 		if (el) {
 			el.scrollIntoView({behavior: 'smooth', block: 'center'});
 			el.addClass('side-comment-item-highlight');
@@ -91,8 +96,8 @@ export class CommentPanelView extends ItemView {
 
 		this.renderToolbar(contentEl);
 
-		const filtered = this.getFilteredComments();
-		if (filtered.length === 0) {
+		const threads = this.getFilteredThreads();
+		if (threads.length === 0) {
 			contentEl.createEl('div', {
 				text: 'No comments yet.',
 				cls: 'side-comment-empty',
@@ -101,8 +106,8 @@ export class CommentPanelView extends ItemView {
 		}
 
 		const listEl = contentEl.createDiv({cls: 'side-comment-list'});
-		for (const comment of filtered) {
-			this.renderCommentItem(listEl, comment);
+		for (const thread of threads) {
+			this.renderThread(listEl, thread);
 		}
 	}
 
@@ -129,47 +134,60 @@ export class CommentPanelView extends ItemView {
 		}
 	}
 
-	private getFilteredComments(): CommentData[] {
-		let filtered = [...this.comments];
+	private getFilteredThreads(): CommentThread[] {
+		let threads = this.plugin.store.getThreads(this.comments);
 
 		if (this.filter === 'active') {
-			filtered = filtered.filter(c => c.status === 'active');
+			threads = threads.filter(t => t.root.status === 'active');
 		} else if (this.filter === 'orphaned') {
-			filtered = filtered.filter(c => c.status === 'orphaned');
+			threads = threads.filter(t => t.root.status === 'orphaned');
 		}
 
 		if (this.plugin.settings.commentSortOrder === 'position') {
-			filtered.sort((a, b) => {
-				const anchorA = this.anchors.get(a.id);
-				const anchorB = this.anchors.get(b.id);
+			threads.sort((a, b) => {
+				const anchorA = this.anchors.get(a.root.id);
+				const anchorB = this.anchors.get(b.root.id);
 				if (!anchorA && !anchorB) return 0;
 				if (!anchorA) return 1;
 				if (!anchorB) return -1;
 				return anchorA.from - anchorB.from;
 			});
 		} else {
-			filtered.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+			threads.sort((a, b) => a.root.createdAt.localeCompare(b.root.createdAt));
 		}
 
-		return filtered;
+		return threads;
 	}
 
-	private renderCommentItem(container: HTMLElement, comment: CommentData): void {
-		const item = container.createDiv({
-			cls: `side-comment-item${comment.status === 'orphaned' ? ' side-comment-orphaned' : ''}`,
-			attr: {'data-comment-id': comment.id},
+	private renderThread(container: HTMLElement, thread: CommentThread): void {
+		const threadEl = container.createDiv({
+			cls: `side-comment-thread${thread.root.status === 'orphaned' ? ' side-comment-orphaned' : ''}`,
+			attr: {'data-comment-id': thread.root.id},
 		});
+
+		this.renderRootComment(threadEl, thread.root, thread.replies.length);
+
+		if (thread.replies.length > 0) {
+			const repliesEl = threadEl.createDiv({cls: 'side-comment-replies'});
+			for (const reply of thread.replies) {
+				this.renderReply(repliesEl, reply);
+			}
+		}
+	}
+
+	private renderRootComment(container: HTMLElement, root: RootComment, replyCount: number): void {
+		const item = container.createDiv({cls: 'side-comment-item'});
 
 		// Target text quote
 		const quote = item.createEl('blockquote', {
 			cls: 'side-comment-quote',
 		});
-		const exactText = comment.target.exact.length > 100
-			? comment.target.exact.substring(0, 100) + '...'
-			: comment.target.exact;
+		const exactText = root.target.exact.length > 100
+			? root.target.exact.substring(0, 100) + '...'
+			: root.target.exact;
 		quote.createEl('span', {text: exactText});
 
-		if (comment.status === 'orphaned') {
+		if (root.status === 'orphaned') {
 			quote.createEl('span', {
 				text: ' (orphaned)',
 				cls: 'side-comment-orphaned-badge',
@@ -178,14 +196,14 @@ export class CommentPanelView extends ItemView {
 
 		// Click quote to scroll editor
 		quote.addEventListener('click', () => {
-			this.scrollEditorToComment(comment);
+			this.scrollEditorToComment(root);
 		});
 
 		// Comment body (rendered as Markdown)
 		const bodyEl = item.createDiv({cls: 'side-comment-body'});
 		void MarkdownRenderer.render(
 			this.plugin.app,
-			comment.body,
+			root.body,
 			bodyEl,
 			this.currentFile?.path ?? '',
 			this,
@@ -194,7 +212,68 @@ export class CommentPanelView extends ItemView {
 		// Footer: timestamp + actions
 		const footer = item.createDiv({cls: 'side-comment-footer'});
 
-		const time = new Date(comment.createdAt);
+		const time = new Date(root.createdAt);
+		footer.createEl('span', {
+			text: time.toLocaleString(),
+			cls: 'side-comment-timestamp',
+		});
+
+		const actions = footer.createDiv({cls: 'side-comment-actions'});
+
+		const replyBtn = actions.createEl('button', {
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': `Reply (${replyCount})`},
+		});
+		setIcon(replyBtn, 'message-circle');
+		if (replyCount > 0) {
+			replyBtn.createEl('span', {
+				text: String(replyCount),
+				cls: 'side-comment-reply-count-badge',
+			});
+		}
+		replyBtn.addEventListener('click', () => {
+			this.addReply(root);
+		});
+
+		const editBtn = actions.createEl('button', {
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': 'Edit comment'},
+		});
+		setIcon(editBtn, 'pencil');
+		editBtn.addEventListener('click', () => {
+			this.editComment(root);
+		});
+
+		const deleteBtn = actions.createEl('button', {
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': 'Delete comment'},
+		});
+		setIcon(deleteBtn, 'trash');
+		deleteBtn.addEventListener('click', () => {
+			void this.deleteComment(root);
+		});
+	}
+
+	private renderReply(container: HTMLElement, reply: ReplyComment): void {
+		const item = container.createDiv({
+			cls: 'side-comment-reply',
+			attr: {'data-reply-id': reply.id},
+		});
+
+		// Reply body (rendered as Markdown)
+		const bodyEl = item.createDiv({cls: 'side-comment-body'});
+		void MarkdownRenderer.render(
+			this.plugin.app,
+			reply.body,
+			bodyEl,
+			this.currentFile?.path ?? '',
+			this,
+		);
+
+		// Footer: timestamp + actions
+		const footer = item.createDiv({cls: 'side-comment-footer'});
+
+		const time = new Date(reply.createdAt);
 		footer.createEl('span', {
 			text: time.toLocaleString(),
 			cls: 'side-comment-timestamp',
@@ -203,26 +282,26 @@ export class CommentPanelView extends ItemView {
 		const actions = footer.createDiv({cls: 'side-comment-actions'});
 
 		const editBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn',
-			attr: {'aria-label': 'Edit comment'},
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': 'Edit reply'},
 		});
 		setIcon(editBtn, 'pencil');
 		editBtn.addEventListener('click', () => {
-			this.editComment(comment);
+			this.editComment(reply);
 		});
 
 		const deleteBtn = actions.createEl('button', {
-			cls: 'side-comment-action-btn',
-			attr: {'aria-label': 'Delete comment'},
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': 'Delete reply'},
 		});
 		setIcon(deleteBtn, 'trash');
 		deleteBtn.addEventListener('click', () => {
-			void this.deleteComment(comment);
+			void this.deleteComment(reply);
 		});
 	}
 
-	private scrollEditorToComment(comment: CommentData): void {
-		const anchor = this.anchors.get(comment.id);
+	private scrollEditorToComment(root: RootComment): void {
+		const anchor = this.anchors.get(root.id);
 		if (!anchor || !this.currentFile) return;
 
 		const leaf = this.plugin.app.workspace.getLeaf(false);
@@ -240,6 +319,22 @@ export class CommentPanelView extends ItemView {
 				);
 			}
 		});
+	}
+
+	private addReply(root: RootComment): void {
+		if (!this.currentFile) return;
+		const filePath = this.currentFile.path;
+
+		new CommentModal(
+			this.plugin.app,
+			(body) => {
+				void this.plugin.store.addReply(filePath, root.id, body).then(() => {
+					void this.refresh();
+				});
+			},
+			undefined,
+			'Add reply'
+		).open();
 	}
 
 	private editComment(comment: CommentData): void {

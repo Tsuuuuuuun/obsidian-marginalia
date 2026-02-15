@@ -1,5 +1,4 @@
 import type SideCommentPlugin from '../main';
-import type {CommentData} from '../types';
 
 export class CommentPopover {
 	private plugin: SideCommentPlugin;
@@ -30,34 +29,40 @@ export class CommentPopover {
 		if (!file) return;
 
 		const allComments = await this.plugin.store.getComments(file.path);
-		const matched: CommentData[] = [];
-		for (const id of commentIds) {
-			const c = allComments.find(cm => cm.id === id);
-			if (c) matched.push(c);
-		}
-		if (matched.length === 0) return;
+		const threads = this.plugin.store.getThreads(allComments);
+
+		// Only show threads whose root is in the requested commentIds
+		const matchedThreads = threads.filter(t => commentIds.includes(t.root.id));
+		if (matchedThreads.length === 0) return;
 
 		this.popoverEl.empty();
 
-		for (let i = 0; i < matched.length; i++) {
-			const comment = matched[i]!;
+		for (let i = 0; i < matchedThreads.length; i++) {
+			const thread = matchedThreads[i]!;
 
 			if (i > 0) {
 				this.popoverEl.createEl('hr', {cls: 'side-comment-popover-divider'});
 			}
 
 			const item = this.popoverEl.createEl('div', {cls: 'side-comment-popover-item'});
-			const bodyPreview = comment.body.length > 150
-				? comment.body.substring(0, 150) + '...'
-				: comment.body;
+			const bodyPreview = thread.root.body.length > 150
+				? thread.root.body.substring(0, 150) + '...'
+				: thread.root.body;
 			item.createEl('div', {
 				text: bodyPreview,
 				cls: 'side-comment-popover-body',
 			});
 
+			if (thread.replies.length > 0) {
+				item.createEl('div', {
+					text: `${thread.replies.length} ${thread.replies.length === 1 ? 'reply' : 'replies'}`,
+					cls: 'side-comment-popover-reply-count',
+				});
+			}
+
 			item.addEventListener('click', (e) => {
 				e.stopPropagation();
-				this.plugin.scrollPanelToComment(comment.id);
+				this.plugin.scrollPanelToComment(thread.root.id);
 				this.hide();
 			});
 		}

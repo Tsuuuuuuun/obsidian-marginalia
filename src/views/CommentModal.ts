@@ -3,12 +3,14 @@ import {Modal, type App} from 'obsidian';
 export class CommentModal extends Modal {
 	private onSave: (body: string) => void;
 	private initialBody: string;
+	private modalTitle: string | undefined;
 	private textareaEl: HTMLTextAreaElement;
 
-	constructor(app: App, onSave: (body: string) => void, existingBody?: string) {
+	constructor(app: App, onSave: (body: string) => void, existingBody?: string, title?: string) {
 		super(app);
 		this.onSave = onSave;
 		this.initialBody = existingBody ?? '';
+		this.modalTitle = title;
 	}
 
 	onOpen(): void {
@@ -16,7 +18,7 @@ export class CommentModal extends Modal {
 		contentEl.addClass('side-comment-modal');
 
 		contentEl.createEl('h3', {
-			text: this.initialBody ? 'Edit comment' : 'Add comment',
+			text: this.modalTitle ?? (this.initialBody ? 'Edit comment' : 'Add comment'),
 		});
 
 		this.textareaEl = contentEl.createEl('textarea', {

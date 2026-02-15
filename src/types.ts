@@ -6,13 +6,36 @@ export interface CommentTarget {
 	lineHint?: number;
 }
 
-export interface CommentData {
+export interface RootComment {
 	id: string;
 	body: string;
 	target: CommentTarget;
 	status: 'active' | 'orphaned';
 	createdAt: string;
 	updatedAt: string;
+}
+
+export interface ReplyComment {
+	id: string;
+	parentId: string;
+	body: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export type CommentData = RootComment | ReplyComment;
+
+export function isRootComment(c: CommentData): c is RootComment {
+	return !('parentId' in c);
+}
+
+export function isReplyComment(c: CommentData): c is ReplyComment {
+	return 'parentId' in c;
+}
+
+export interface CommentThread {
+	root: RootComment;
+	replies: ReplyComment[];
 }
 
 export interface CommentFile {

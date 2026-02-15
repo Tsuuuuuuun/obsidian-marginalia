@@ -1,5 +1,6 @@
 import type {DataAdapter} from 'obsidian';
-import type {CommentData, CommentFile, CommentTarget, ResolvedAnchor} from '../types';
+import type {CommentData, CommentFile, CommentTarget, CommentThread, ReplyComment, ResolvedAnchor, RootComment} from '../types';
+import {isRootComment, isReplyComment} from '../types';
 import {PathIndex} from './PathIndex';
 
 export class CommentStore {
@@ -33,10 +34,10 @@ export class CommentStore {
 		return file.comments;
 	}
 
-	async addComment(notePath: string, body: string, target: CommentTarget): Promise<CommentData> {
+	async addComment(notePath: string, body: string, target: CommentTarget): Promise<RootComment> {
 		const file = await this.getOrCreateCommentFile(notePath);
 		const now = new Date().toISOString();
-		const comment: CommentData = {
+		const comment: RootComment = {
 			id: generateId(),
 			body,
 			target,
@@ -47,6 +48,26 @@ export class CommentStore {
 		file.comments.push(comment);
 		this.scheduleSave(notePath);
 		return comment;
+	}
+
+	async addReply(notePath: string, parentId: string, body: string): Promise<ReplyComment | null> {
+		const file = await this.loadCommentFile(notePath);
+		if (!file) return null;
+
+		const parent = file.comments.find(c => c.id === parentId);
+		if (!parent || !isRootComment(parent)) return null;
+
+		const now = new Date().toISOString();
+		const reply: ReplyComment = {
+			id: generateId(),
+			parentId,
+			body,
+			createdAt: now,
+			updatedAt: now,
+		};
+		file.comments.push(reply);
+		this.scheduleSave(notePath);
+		return reply;
 	}
 
 	async updateComment(notePath: string, commentId: string, body: string): Promise<CommentData | null> {
@@ -69,9 +90,53 @@ export class CommentStore {
 		const idx = file.comments.findIndex(c => c.id === commentId);
 		if (idx === -1) return false;
 
-		file.comments.splice(idx, 1);
+		const target = file.comments[idx]!;
+
+		if (isRootComment(target)) {
+			// Cascade delete: remove all replies to this root comment
+			file.comments = file.comments.filter(
+				c => c.id === commentId ? false : !(isReplyComment(c) && c.parentId === commentId)
+			);
+		} else {
+			file.comments.splice(idx, 1);
+		}
+
 		this.scheduleSave(notePath);
 		return true;
+	}
+
+	getThreads(comments: CommentData[]): CommentThread[] {
+		const replyMap = new Map<string, ReplyComment[]>();
+		const roots: RootComment[] = [];
+
+		for (const c of comments) {
+			if (isRootComment(c)) {
+				roots.push(c);
+			} else {
+				const existing = replyMap.get(c.parentId);
+				if (existing) {
+					existing.push(c);
+				} else {
+					replyMap.set(c.parentId, [c]);
+				}
+			}
+		}
+
+		// Warn about orphaned replies (parent not found)
+		for (const [parentId] of replyMap) {
+			if (!roots.some(r => r.id === parentId)) {
+				console.warn(`[side-comment] Reply references non-existent parent: ${parentId}`);
+			}
+		}
+
+		const threads: CommentThread[] = [];
+		for (const root of roots) {
+			const replies = replyMap.get(root.id) ?? [];
+			replies.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+			threads.push({root, replies});
+		}
+
+		return threads;
 	}
 
 	async resolveAnchors(notePath: string, docText: string, threshold: number): Promise<Map<string, ResolvedAnchor>> {
@@ -82,6 +147,8 @@ export class CommentStore {
 		let changed = false;
 
 		for (const comment of comments) {
+			if (!isRootComment(comment)) continue;
+
 			const anchor = this.resolveAnchorFn(comment.target, docText, threshold);
 			if (anchor) {
 				results.set(comment.id, anchor);
