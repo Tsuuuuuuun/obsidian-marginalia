@@ -1,8 +1,251 @@
-/*
+/* Side Comment Plugin Styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* Comment icon widget (negative margin cancels width so text isn't pushed) */
+.side-comment-gutter-icon {
+	display: inline-block;
+	position: relative;
+	width: 20px;
+	margin-right: -20px;
+	vertical-align: middle;
+	text-align: center;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 100ms ease;
+	user-select: none;
+}
 
-If your plugin does not need CSS, delete this file.
+/* Badge showing comment count */
+.side-comment-badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	min-width: 14px;
+	height: 14px;
+	line-height: 14px;
+	font-size: 10px;
+	text-align: center;
+	border-radius: 7px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	pointer-events: none;
+}
 
-*/
+.side-comment-gutter-icon svg {
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+}
+
+.side-comment-gutter-icon:hover {
+	opacity: 1;
+}
+
+/* Popover */
+.side-comment-popover {
+	position: fixed;
+	z-index: var(--layer-popover);
+	top: var(--popover-top, 0);
+	left: var(--popover-left, 0);
+	max-width: 300px;
+	padding: 8px 12px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	box-shadow: var(--shadow-s);
+	font-size: var(--font-small);
+	cursor: pointer;
+}
+
+.side-comment-popover-hidden {
+	display: none;
+}
+
+.side-comment-popover-item {
+	cursor: pointer;
+	padding: 2px 0;
+	border-radius: var(--radius-s);
+}
+
+.side-comment-popover-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.side-comment-popover-divider {
+	margin: 4px 0;
+	border: none;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.side-comment-popover-body {
+	color: var(--text-normal);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.side-comment-popover-hint {
+	margin-top: 4px;
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+}
+
+/* Panel */
+.side-comment-panel {
+	padding: 8px;
+}
+
+.side-comment-empty {
+	padding: 16px;
+	text-align: center;
+	color: var(--text-muted);
+}
+
+.side-comment-toolbar {
+	display: flex;
+	justify-content: flex-start;
+	margin-bottom: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.side-comment-filter-group {
+	display: flex;
+	gap: 4px;
+}
+
+.side-comment-filter-btn {
+	font-size: var(--font-smallest);
+	padding: 2px 8px;
+	border-radius: var(--radius-s);
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.side-comment-filter-btn.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+/* Comment list */
+.side-comment-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.side-comment-item {
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+.side-comment-item-highlight {
+	animation: side-comment-highlight 2s ease;
+}
+
+@keyframes side-comment-highlight {
+	0% { background: var(--text-highlight-bg); }
+	100% { background: var(--background-secondary); }
+}
+
+.side-comment-orphaned {
+	border-left: 3px solid var(--text-error);
+	opacity: 0.7;
+}
+
+.side-comment-quote {
+	margin: 0 0 6px 0;
+	padding: 4px 8px;
+	border-left: 3px solid var(--text-accent);
+	font-size: var(--font-small);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.side-comment-quote:hover {
+	color: var(--text-normal);
+}
+
+.side-comment-orphaned-badge {
+	font-size: var(--font-smallest);
+	color: var(--text-error);
+	margin-left: 4px;
+}
+
+.side-comment-body {
+	font-size: var(--font-small);
+	margin-bottom: 6px;
+}
+
+.side-comment-body p {
+	margin: 0 0 4px 0;
+}
+
+.side-comment-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.side-comment-timestamp {
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+}
+
+.side-comment-actions {
+	display: flex;
+	gap: 4px;
+}
+
+.side-comment-action-btn {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 2px;
+	color: var(--text-muted);
+	border-radius: var(--radius-s);
+}
+
+.side-comment-action-btn:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+/* Modal */
+.side-comment-modal {
+	max-width: 500px;
+}
+
+.side-comment-modal-textarea {
+	width: 100%;
+	min-height: 120px;
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-family: var(--font-text);
+	font-size: var(--font-ui-small);
+	resize: vertical;
+}
+
+.side-comment-modal-textarea:focus {
+	border-color: var(--interactive-accent);
+	outline: none;
+}
+
+.side-comment-modal-buttons {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.side-comment-modal-hint {
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+	margin-top: 8px;
+}
