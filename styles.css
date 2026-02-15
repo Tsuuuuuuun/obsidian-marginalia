@@ -401,3 +401,13 @@
 .marginalia-resolved.marginalia-orphaned {
 	opacity: 0.5;
 }
+
+/* Settings: migrate button spin animation */
+.marginalia-spin .clickable-icon {
+	animation: marginalia-spin 1s linear infinite;
+}
+
+@keyframes marginalia-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}

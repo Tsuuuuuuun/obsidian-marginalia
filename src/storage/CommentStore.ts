@@ -11,9 +11,13 @@ export class CommentStore {
 	private writeTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 	private resolveAnchorFn: ((target: CommentTarget, docText: string, threshold: number) => ResolvedAnchor | null) | null = null;
 
-	constructor(adapter: DataAdapter, pluginDir: string) {
+	get currentBasePath(): string {
+		return this.basePath;
+	}
+
+	constructor(adapter: DataAdapter, basePath: string) {
 		this.adapter = adapter;
-		this.basePath = `${pluginDir}/comments`;
+		this.basePath = basePath;
 		this.pathIndex = new PathIndex(adapter, this.basePath);
 	}
 
@@ -207,6 +211,79 @@ export class CommentStore {
 			saves.push(this.saveCommentFile(notePath));
 		}
 		await Promise.all(saves);
+	}
+
+	async migrateData(newBasePath: string): Promise<number> {
+		if (newBasePath === this.basePath) {
+			return 0;
+		}
+
+		// Phase 0: Flush all pending writes to disk
+		await this.flushAll();
+
+		// Ensure destination directory exists
+		if (!(await this.adapter.exists(newBasePath))) {
+			await this.adapter.mkdir(newBasePath);
+		}
+
+		// Phase 1: List source files
+		let listed: { files: string[]; folders: string[] };
+		try {
+			listed = await this.adapter.list(this.basePath);
+		} catch {
+			// Source directory doesn't exist or can't be listed
+			this.reinitialize(newBasePath);
+			await this.pathIndex.load();
+			return 0;
+		}
+
+		if (listed.files.length === 0) {
+			this.reinitialize(newBasePath);
+			await this.pathIndex.load();
+			return 0;
+		}
+
+		// Phase 2: Copy all files to destination
+		const copies: Array<{ src: string; dest: string; content: string }> = [];
+		for (const srcFile of listed.files) {
+			const fileName = srcFile.substring(this.basePath.length + 1);
+			const content = await this.adapter.read(srcFile);
+			const destFile = `${newBasePath}/${fileName}`;
+			await this.adapter.write(destFile, content);
+			copies.push({ src: srcFile, dest: destFile, content });
+		}
+
+		// Phase 3: Verify all copies before deleting originals
+		for (const { dest, content } of copies) {
+			const verified = await this.adapter.read(dest);
+			if (verified !== content) {
+				throw new Error(`Migration verification failed for ${dest}`);
+			}
+		}
+
+		// Phase 4: Delete originals (all copies verified)
+		for (const { src } of copies) {
+			await this.adapter.remove(src);
+		}
+
+		// Phase 5: Try to remove the now-empty source directory
+		try {
+			await this.adapter.rmdir(this.basePath, false);
+		} catch {
+			// Directory might not be empty or removable — ignore
+		}
+
+		// Phase 6: Reinitialize store with new basePath
+		this.reinitialize(newBasePath);
+		await this.pathIndex.load();
+
+		return copies.length;
+	}
+
+	private reinitialize(newBasePath: string): void {
+		this.basePath = newBasePath;
+		this.pathIndex = new PathIndex(this.adapter, this.basePath);
+		this.cache.clear();
 	}
 
 	private async loadCommentFile(notePath: string): Promise<CommentFile | null> {

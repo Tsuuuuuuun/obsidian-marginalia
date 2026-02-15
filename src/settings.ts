@@ -1,7 +1,8 @@
-import {App, PluginSettingTab, Setting} from "obsidian";
+import {App, Notice, PluginSettingTab, Setting} from "obsidian";
 import type MarginaliaPlugin from "./main";
 
 export interface MarginaliaSettings {
+	storageLocation: 'plugin' | 'vault';
 	commentSortOrder: 'position' | 'created';
 	showGutterIcons: boolean;
 	fuzzyMatchThreshold: number;
@@ -9,6 +10,7 @@ export interface MarginaliaSettings {
 }
 
 export const DEFAULT_SETTINGS: MarginaliaSettings = {
+	storageLocation: 'plugin',
 	commentSortOrder: 'position',
 	showGutterIcons: true,
 	fuzzyMatchThreshold: 0.3,
@@ -26,6 +28,52 @@ export class MarginaliaSettingTab extends PluginSettingTab {
 	display(): void {
 		const {containerEl} = this;
 		containerEl.empty();
+
+		new Setting(containerEl)
+			.setName('Storage location')
+			.setDesc('Where comment data is stored. After changing, use the migrate button to move existing data. Without migration, a plugin reload is needed and previous comments will not be visible.')
+			.addDropdown(dropdown => dropdown
+				.addOption('plugin', 'Plugin folder (comments/)')
+				.addOption('vault', 'Vault root (.marginalia/)')
+				.setValue(this.plugin.settings.storageLocation)
+				.onChange(async (value) => {
+					this.plugin.settings.storageLocation = value as 'plugin' | 'vault';
+					await this.plugin.saveSettings();
+				}))
+			.addExtraButton(button => {
+				button
+					.setIcon('refresh-cw')
+					.setTooltip('Migrate comment data to the selected location')
+					.onClick(async () => {
+						const newBasePath = this.plugin.settings.storageLocation === 'vault'
+							? '.marginalia'
+							: `${this.plugin.manifest.dir ?? ''}/comments`;
+
+						if (newBasePath === this.plugin.store.currentBasePath) {
+							new Notice('Comment data is already in the selected location.');
+							return;
+						}
+
+						button.setDisabled(true);
+						button.extraSettingsEl.addClass('marginalia-spin');
+
+						try {
+							const count = await this.plugin.store.migrateData(newBasePath);
+							if (count === 0) {
+								new Notice('No comment data to migrate.');
+							} else {
+								new Notice(`Migrated ${count} file(s) successfully.`);
+							}
+							this.plugin.refreshPanel();
+							this.plugin.updateGutterEffects();
+						} catch (e) {
+							new Notice(`Migration failed: ${e instanceof Error ? e.message : String(e)}`);
+						} finally {
+							button.setDisabled(false);
+							button.extraSettingsEl.removeClass('marginalia-spin');
+						}
+					});
+			});
 
 		new Setting(containerEl)
 			.setName('Comment sort order')
