@@ -1,7 +1,7 @@
 import {ItemView, MarkdownRenderer, MarkdownView, WorkspaceLeaf, TFile, setIcon} from 'obsidian';
 import type SideCommentPlugin from '../main';
-import type {CommentData, CommentThread, ReplyComment, ResolvedAnchor, RootComment} from '../types';
-import {isReplyComment} from '../types';
+import type {AnchoredComment, CommentData, CommentThread, NoteComment, PanelData, ReplyComment, ResolvedAnchor} from '../types';
+import {isReplyComment, isNoteComment} from '../types';
 import {CommentModal} from './CommentModal';
 
 export const VIEW_TYPE_COMMENT_PANEL = 'side-comment-panel';
@@ -96,8 +96,9 @@ export class CommentPanelView extends ItemView {
 
 		this.renderToolbar(contentEl);
 
-		const threads = this.getFilteredThreads();
-		if (threads.length === 0) {
+		const {noteComments, threads} = this.getFilteredPanelData();
+
+		if (noteComments.length === 0 && threads.length === 0) {
 			contentEl.createEl('div', {
 				text: 'No comments yet.',
 				cls: 'side-comment-empty',
@@ -106,8 +107,26 @@ export class CommentPanelView extends ItemView {
 		}
 
 		const listEl = contentEl.createDiv({cls: 'side-comment-list'});
-		for (const thread of threads) {
-			this.renderThread(listEl, thread);
+
+		if (noteComments.length > 0) {
+			const noteSection = listEl.createDiv({cls: 'side-comment-note-section'});
+			const header = noteSection.createDiv({cls: 'side-comment-section-header'});
+			setIcon(header.createSpan(), 'sticky-note');
+			header.createSpan({text: 'Note comments'});
+			for (const nc of noteComments) {
+				this.renderNoteComment(noteSection, nc);
+			}
+		}
+
+		if (threads.length > 0) {
+			if (noteComments.length > 0) {
+				const anchoredHeader = listEl.createDiv({cls: 'side-comment-section-header'});
+				setIcon(anchoredHeader.createSpan(), 'message-square');
+				anchoredHeader.createSpan({text: 'Anchored comments'});
+			}
+			for (const thread of threads) {
+				this.renderThread(listEl, thread);
+			}
 		}
 	}
 
@@ -134,13 +153,18 @@ export class CommentPanelView extends ItemView {
 		}
 	}
 
-	private getFilteredThreads(): CommentThread[] {
-		let threads = this.plugin.store.getThreads(this.comments);
+	private getFilteredPanelData(): PanelData {
+		const panelData = this.plugin.store.getPanelData(this.comments);
+		let {noteComments} = panelData;
+		let {threads} = panelData;
 
 		if (this.filter === 'active') {
 			threads = threads.filter(t => t.root.status === 'active');
+			// NoteComment always visible in "active" filter
 		} else if (this.filter === 'orphaned') {
 			threads = threads.filter(t => t.root.status === 'orphaned');
+			// NoteComment hidden in "orphaned" filter (they can't be orphaned)
+			noteComments = [];
 		}
 
 		if (this.plugin.settings.commentSortOrder === 'position') {
@@ -156,7 +180,58 @@ export class CommentPanelView extends ItemView {
 			threads.sort((a, b) => a.root.createdAt.localeCompare(b.root.createdAt));
 		}
 
-		return threads;
+		return {noteComments, threads};
+	}
+
+	private renderNoteComment(container: HTMLElement, nc: NoteComment): void {
+		const item = container.createDiv({
+			cls: 'side-comment-note-item',
+			attr: {'data-comment-id': nc.id},
+		});
+
+		// Note label
+		const label = item.createDiv({cls: 'side-comment-note-label'});
+		setIcon(label.createSpan(), 'sticky-note');
+		label.createSpan({text: 'Note'});
+
+		// Comment body (rendered as Markdown)
+		const bodyEl = item.createDiv({cls: 'side-comment-body'});
+		void MarkdownRenderer.render(
+			this.plugin.app,
+			nc.body,
+			bodyEl,
+			this.currentFile?.path ?? '',
+			this,
+		);
+
+		// Footer: timestamp + actions
+		const footer = item.createDiv({cls: 'side-comment-footer'});
+
+		const time = new Date(nc.createdAt);
+		footer.createEl('span', {
+			text: time.toLocaleString(),
+			cls: 'side-comment-timestamp',
+		});
+
+		const actions = footer.createDiv({cls: 'side-comment-actions'});
+
+		const editBtn = actions.createEl('button', {
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': 'Edit comment'},
+		});
+		setIcon(editBtn, 'pencil');
+		editBtn.addEventListener('click', () => {
+			this.editComment(nc);
+		});
+
+		const deleteBtn = actions.createEl('button', {
+			cls: 'side-comment-action-btn clickable-icon',
+			attr: {'aria-label': 'Delete comment'},
+		});
+		setIcon(deleteBtn, 'trash');
+		deleteBtn.addEventListener('click', () => {
+			void this.deleteComment(nc);
+		});
 	}
 
 	private renderThread(container: HTMLElement, thread: CommentThread): void {
@@ -175,7 +250,7 @@ export class CommentPanelView extends ItemView {
 		}
 	}
 
-	private renderRootComment(container: HTMLElement, root: RootComment, replyCount: number): void {
+	private renderRootComment(container: HTMLElement, root: AnchoredComment, replyCount: number): void {
 		const item = container.createDiv({cls: 'side-comment-item'});
 
 		// Target text quote
@@ -300,7 +375,7 @@ export class CommentPanelView extends ItemView {
 		});
 	}
 
-	private scrollEditorToComment(root: RootComment): void {
+	private scrollEditorToComment(root: AnchoredComment): void {
 		const anchor = this.anchors.get(root.id);
 		if (!anchor || !this.currentFile) return;
 
@@ -321,7 +396,7 @@ export class CommentPanelView extends ItemView {
 		});
 	}
 
-	private addReply(root: RootComment): void {
+	private addReply(root: AnchoredComment): void {
 		if (!this.currentFile) return;
 		const filePath = this.currentFile.path;
 
@@ -356,6 +431,8 @@ export class CommentPanelView extends ItemView {
 		if (!this.currentFile) return;
 		await this.plugin.store.deleteComment(this.currentFile.path, comment.id);
 		await this.refresh();
-		this.plugin.updateGutterEffects();
+		if (!isNoteComment(comment)) {
+			this.plugin.updateGutterEffects();
+		}
 	}
 }

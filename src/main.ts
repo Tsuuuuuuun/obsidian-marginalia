@@ -77,6 +77,18 @@ export default class SideCommentPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: 'add-note-comment',
+			name: 'Add note comment',
+			checkCallback: (checking) => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file || file.extension !== 'md') return false;
+				if (checking) return true;
+				this.addNoteComment(file.path);
+				return true;
+			},
+		});
+
 		// Context menu
 		this.registerEvent(
 			this.app.workspace.on('editor-menu', (menu, editor, view) => {
@@ -86,6 +98,15 @@ export default class SideCommentPlugin extends Plugin {
 							.setIcon('message-square')
 							.onClick(() => {
 								this.addCommentFromSelection(editor, view as MarkdownView);
+							});
+					});
+				}
+				if (view.file) {
+					menu.addItem((item) => {
+						item.setTitle('Add note comment')
+							.setIcon('sticky-note')
+							.onClick(() => {
+								this.addNoteComment(view.file!.path);
 							});
 					});
 				}
@@ -202,6 +223,14 @@ export default class SideCommentPlugin extends Plugin {
 				this.refreshPanel();
 			});
 		}).open();
+	}
+
+	private addNoteComment(filePath: string): void {
+		new CommentModal(this.app, (body) => {
+			void this.store.addNoteComment(filePath, body).then(() => {
+				this.refreshPanel();
+			});
+		}, undefined, 'Add note comment').open();
 	}
 
 	private async activatePanel(): Promise<void> {

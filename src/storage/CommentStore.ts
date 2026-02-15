@@ -1,6 +1,6 @@
 import type {DataAdapter} from 'obsidian';
-import type {CommentData, CommentFile, CommentTarget, CommentThread, ReplyComment, ResolvedAnchor, RootComment} from '../types';
-import {isRootComment, isReplyComment} from '../types';
+import type {AnchoredComment, CommentData, CommentFile, CommentTarget, CommentThread, NoteComment, PanelData, ReplyComment, ResolvedAnchor} from '../types';
+import {isReplyComment, isAnchoredComment, isNoteComment} from '../types';
 import {PathIndex} from './PathIndex';
 
 export class CommentStore {
@@ -34,14 +34,30 @@ export class CommentStore {
 		return file.comments;
 	}
 
-	async addComment(notePath: string, body: string, target: CommentTarget): Promise<RootComment> {
+	async addComment(notePath: string, body: string, target: CommentTarget): Promise<AnchoredComment> {
 		const file = await this.getOrCreateCommentFile(notePath);
 		const now = new Date().toISOString();
-		const comment: RootComment = {
+		const comment: AnchoredComment = {
+			kind: 'anchored',
 			id: generateId(),
 			body,
 			target,
 			status: 'active',
+			createdAt: now,
+			updatedAt: now,
+		};
+		file.comments.push(comment);
+		this.scheduleSave(notePath);
+		return comment;
+	}
+
+	async addNoteComment(notePath: string, body: string): Promise<NoteComment> {
+		const file = await this.getOrCreateCommentFile(notePath);
+		const now = new Date().toISOString();
+		const comment: NoteComment = {
+			kind: 'note',
+			id: generateId(),
+			body,
 			createdAt: now,
 			updatedAt: now,
 		};
@@ -55,7 +71,7 @@ export class CommentStore {
 		if (!file) return null;
 
 		const parent = file.comments.find(c => c.id === parentId);
-		if (!parent || !isRootComment(parent)) return null;
+		if (!parent || !isAnchoredComment(parent)) return null;
 
 		const now = new Date().toISOString();
 		const reply: ReplyComment = {
@@ -92,8 +108,11 @@ export class CommentStore {
 
 		const target = file.comments[idx]!;
 
-		if (isRootComment(target)) {
-			// Cascade delete: remove all replies to this root comment
+		if (isNoteComment(target)) {
+			// NoteComment has no replies — simple removal
+			file.comments.splice(idx, 1);
+		} else if (isAnchoredComment(target)) {
+			// Cascade delete: remove all replies to this anchored comment
 			file.comments = file.comments.filter(
 				c => c.id === commentId ? false : !(isReplyComment(c) && c.parentId === commentId)
 			);
@@ -107,12 +126,12 @@ export class CommentStore {
 
 	getThreads(comments: CommentData[]): CommentThread[] {
 		const replyMap = new Map<string, ReplyComment[]>();
-		const roots: RootComment[] = [];
+		const roots: AnchoredComment[] = [];
 
 		for (const c of comments) {
-			if (isRootComment(c)) {
+			if (isAnchoredComment(c)) {
 				roots.push(c);
-			} else {
+			} else if (isReplyComment(c)) {
 				const existing = replyMap.get(c.parentId);
 				if (existing) {
 					existing.push(c);
@@ -139,6 +158,20 @@ export class CommentStore {
 		return threads;
 	}
 
+	getPanelData(comments: CommentData[]): PanelData {
+		const noteComments: NoteComment[] = [];
+		for (const c of comments) {
+			if (isNoteComment(c)) {
+				noteComments.push(c);
+			}
+		}
+		noteComments.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+		return {
+			noteComments,
+			threads: this.getThreads(comments),
+		};
+	}
+
 	async resolveAnchors(notePath: string, docText: string, threshold: number): Promise<Map<string, ResolvedAnchor>> {
 		const results = new Map<string, ResolvedAnchor>();
 		if (!this.resolveAnchorFn) return results;
@@ -147,7 +180,7 @@ export class CommentStore {
 		let changed = false;
 
 		for (const comment of comments) {
-			if (!isRootComment(comment)) continue;
+			if (!isAnchoredComment(comment)) continue;
 
 			const anchor = this.resolveAnchorFn(comment.target, docText, threshold);
 			if (anchor) {

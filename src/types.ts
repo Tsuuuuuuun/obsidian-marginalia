@@ -6,7 +6,8 @@ export interface CommentTarget {
 	lineHint?: number;
 }
 
-export interface RootComment {
+export interface AnchoredComment {
+	kind: 'anchored';
 	id: string;
 	body: string;
 	target: CommentTarget;
@@ -14,6 +15,16 @@ export interface RootComment {
 	createdAt: string;
 	updatedAt: string;
 }
+
+export interface NoteComment {
+	kind: 'note';
+	id: string;
+	body: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export type RootComment = AnchoredComment | NoteComment;
 
 export interface ReplyComment {
 	id: string;
@@ -33,9 +44,22 @@ export function isReplyComment(c: CommentData): c is ReplyComment {
 	return 'parentId' in c;
 }
 
+export function isAnchoredComment(c: CommentData): c is AnchoredComment {
+	return !('parentId' in c) && ((c as AnchoredComment).kind === 'anchored' || !('kind' in c));
+}
+
+export function isNoteComment(c: CommentData): c is NoteComment {
+	return 'kind' in c && (c as NoteComment).kind === 'note';
+}
+
 export interface CommentThread {
-	root: RootComment;
+	root: AnchoredComment;
 	replies: ReplyComment[];
+}
+
+export interface PanelData {
+	noteComments: NoteComment[];
+	threads: CommentThread[];
 }
 
 export interface CommentFile {

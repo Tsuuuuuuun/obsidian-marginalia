@@ -261,6 +261,50 @@
 	margin-top: 8px;
 }
 
+/* Note comments section */
+.side-comment-section-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--font-small);
+	font-weight: var(--font-semibold);
+	color: var(--text-muted);
+	margin-bottom: 6px;
+	padding: 4px 0;
+}
+
+.side-comment-section-header svg {
+	width: 14px;
+	height: 14px;
+}
+
+.side-comment-note-section {
+	margin-bottom: 12px;
+}
+
+.side-comment-note-item {
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-left: 3px solid var(--text-warning);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+	margin-bottom: 6px;
+}
+
+.side-comment-note-label {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: var(--font-smallest);
+	color: var(--text-warning);
+	margin-bottom: 6px;
+}
+
+.side-comment-note-label svg {
+	width: 12px;
+	height: 12px;
+}
+
 /* Threads */
 .side-comment-thread {
 	margin-bottom: 8px;
