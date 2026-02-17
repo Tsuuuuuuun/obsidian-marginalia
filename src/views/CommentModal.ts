@@ -39,9 +39,7 @@ export class CommentModal extends Modal {
 		cancelBtn.addEventListener('click', () => this.close());
 
 		const hintEl = contentEl.createDiv({cls: 'marginalia-modal-hint'});
-		// Keyboard shortcut hints use key names, not regular UI text
-		// eslint-disable-next-line obsidianmd/ui/sentence-case
-		hintEl.textContent = 'Mod+Enter to save, Esc to cancel';
+		hintEl.textContent = 'Ctrl/Cmd+Enter to save, Esc to cancel';
 
 		// Mod+Enter to save
 		this.scope.register(['Mod'], 'Enter', () => {
