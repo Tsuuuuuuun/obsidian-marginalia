@@ -1,11 +1,9 @@
-// eslint-disable-next-line import/no-extraneous-dependencies -- externalized, provided by Obsidian
 import {
 	Decoration,
 	EditorView,
 	WidgetType,
 	type DecorationSet,
 } from '@codemirror/view';
-// eslint-disable-next-line import/no-extraneous-dependencies -- externalized, provided by Obsidian
 import {
 	StateField,
 	StateEffect,

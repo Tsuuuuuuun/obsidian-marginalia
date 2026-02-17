@@ -22,6 +22,13 @@ export default tseslint.config(
 		},
 	},
 	...obsidianmd.configs.recommended,
+	{
+		rules: {
+			// @codemirror/*, @lezer/*, electron are externalized by esbuild
+			// and provided by the Obsidian host at runtime.
+			"import/no-extraneous-dependencies": "off",
+		},
+	},
 	globalIgnores([
 		"node_modules",
 		"dist",

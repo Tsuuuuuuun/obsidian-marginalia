@@ -1,7 +1,7 @@
 {
 	"id": "marginalia",
 	"name": "Marginalia",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
 	"description": "Add non-destructive margin comments and annotations to your notes. Anchor comments to specific text without modifying the original file — stored as external sidecar JSON.",
 	"author": "Tsuuuuuuun",

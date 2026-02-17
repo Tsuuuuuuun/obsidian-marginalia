@@ -58,8 +58,9 @@ export class CommentPanelView extends ItemView {
 		await this.updateForActiveFile();
 	}
 
-	async onClose(): Promise<void> {
+	onClose(): Promise<void> {
 		this.contentEl.empty();
+		return Promise.resolve();
 	}
 
 	async refresh(): Promise<void> {
